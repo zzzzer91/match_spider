@@ -106,28 +106,29 @@ class BetfairSpider(spider.MultiThreadSpider):
 
             match_index = title_box_element.xpath('./span[1]/span//text()')[0].strip()
             match_index = cls.RE_FIND_NUM.findall(match_index)[0]
+            # 入库 id
             _id = f'{date_format}{match_index}'
 
-            # league
+            # 联赛名
             league = title_box_element.xpath('./span[@class="c_dgreen"]/text()')[0].strip()
-            # home_name
+            # 主队名
             home_name = title_box_element.xpath('./span[@class="c_yellow"]/span[1]/text()')[0].strip()
-            # visitor_name
+            # 客队名
             visitor_name = title_box_element.xpath('./span[@class="c_yellow"]/span[last()]/text()')[0].strip()
-            # start_time
+            # 比赛开始时间
             start_time = title_box_element.xpath('./span[@class="md_ks_time"]/span[1]/text()')[0].strip()
 
             content_box_element = md_data_box_element.xpath('.//div[@class="md_con_box"]')[0]
 
-            # match_bf_id，请求 detail 时使用
+            # match_bf_id，目标网站数据库中的比赛 id，请求 detail 时使用
             match_bf_id = content_box_element.xpath('./div[2]/@value')[0]
 
             data_table_element = content_box_element.xpath('./div[@class="data_table"]/table/tbody')[0]
-            # betfair_win_odds
+            # 主胜必发赔率，如 1.10。
             betfair_win_odds = data_table_element.xpath('./tr[1]/td[2]/strong/text()')[0].strip()
-            # betfair_win_index
+            # 主胜必发指数，如52.93。
             betfair_win_index = data_table_element.xpath('./tr[1]/td[3]/strong/text()')[0].strip()
-            # avg_win_odds
+            # 主胜百家欧赔赔率，如1.10。
             avg_win_odds = data_table_element.xpath('./tr[1]/td[4]/strong/text()')[0].strip()
             # betfair_draw_odds
             betfair_draw_odds = data_table_element.xpath('./tr[2]/td[2]/strong/text()')[0].strip()
@@ -143,9 +144,9 @@ class BetfairSpider(spider.MultiThreadSpider):
             avg_lose_odds = data_table_element.xpath('./tr[3]/td[4]/strong/text()')[0].strip()
 
             proportion_element = content_box_element.xpath('./div[2]')[0]
-            # total
+            # 成交总量，如3000000
             total = proportion_element.xpath('./div[1]/p[2]/strong/text()')[0].strip()
-            # betfair_win_proportion
+            # 主胜交易占比，如74.99。
             betfair_win_proportion = proportion_element.xpath('./div[2]/p[1]/span[2]/text()')[0].strip().rstrip('%')
             # betfair_draw_proportion
             betfair_draw_proportion = proportion_element.xpath('./div[2]/p[2]/span[2]/text()')[0].strip().rstrip('%')
@@ -153,7 +154,7 @@ class BetfairSpider(spider.MultiThreadSpider):
             betfair_lose_proportion = proportion_element.xpath('./div[2]/p[3]/span[2]/text()')[0].strip().rstrip('%')
 
             large_proportion_element = content_box_element.xpath('./div[3]')[0]
-            # betfair_win_large_proportion
+            # 主胜大额交易占比，如76.89。
             betfair_win_large_proportion = large_proportion_element.xpath('./div[2]/p[1]/span[2]/text()')[0].strip().rstrip('%')
             # betfair_draw_large_proportion
             betfair_draw_large_proportion = large_proportion_element.xpath('./div[2]/p[2]/span[2]/text()')[0].strip().rstrip('%')
