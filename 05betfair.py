@@ -190,7 +190,7 @@ def main() -> None:
     # 从产品列表页抓取部分数据
     spider.run_spider(
         1,
-        EbdProductListSpider,
+        BetfairSpider,
         MYSQL_CONFIG,
         MYSQL_TABLE_BETFAIR
     )
