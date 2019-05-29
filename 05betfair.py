@@ -49,7 +49,7 @@ warnings.filterwarnings('error')
 log.logger.set_log_level(log.DEBUG)
 
 
-class EbdProductListSpider(spider.MultiThreadSpider):
+class BetfairSpider(spider.MultiThreadSpider):
 
     url_temp = 'https://live.aicai.com/jsbf/timelyscore!dynamicBfDataFromPage.htm?lotteryType=zc&issue={}'
 
