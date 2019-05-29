@@ -32,9 +32,7 @@ def read_data(mysql_config: MysqlConfig, sql: str) -> List[Tuple]:
     """读取数据。"""
 
     mysql_conn = pymysql.connect(
-        host=mysql_config['host'], port=mysql_config['port'],
-        user=mysql_config['user'], password=mysql_config['pwd'],
-        db=mysql_config['db']
+        **mysql_config
     )
     cursor = mysql_conn.cursor()
 
