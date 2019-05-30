@@ -90,12 +90,20 @@ class BetfairSpider(spider.MultiThreadSpider):
         r = self.session.get(self.url_temp.format(today_format))
         jd = r.json()
 
-        for item in self.parse(jd['result']['bf_page'], today_format):
-            log.logger.debug(item)
-            self.insert_or_update(item, self.UPDATE_FIELD)
+        if jd['status'] == 'success':
+            for item in self.parse(jd['result']['bf_page'], today_format):
+                log.logger.debug(item)
+                self.insert_or_update(item, self.UPDATE_FIELD)
+        else:  # 访问失败，如请求未来日期，日期不合法
+            log.logger.error(jd['msg'])
 
     @classmethod
     def parse(cls, html: str, date_format: str) -> Iterator[Dict]:
+        """
+
+        :param html:
+        :param date_format: 用于创建入库 id，须在函数外创建，否则可能导致不一致性
+        """
 
         selector = etree.HTML(html)
 
@@ -109,8 +117,9 @@ class BetfairSpider(spider.MultiThreadSpider):
             # 入库 id
             _id = f'{date_format}{match_index}'
 
-            # 联赛名
-            league = title_box_element.xpath('./span[@class="c_dgreen"]/text()')[0].strip()
+            # 联赛名，可能为空
+            league_element = title_box_element.xpath('./span[@class="c_dgreen"]/text()')
+            league = league_element[0].strip() if league_element else None
             # 主队名
             home_name = title_box_element.xpath('./span[@class="c_yellow"]/span[1]/text()')[0].strip()
             # 客队名

@@ -61,15 +61,21 @@ class BetfairDetailSpider(spider.MultiThreadSpider):
             except queue.Empty:
                 break
 
+            year = datetime.datetime.today().strftime('%Y')
             r = self.session.get(self.url_temp.format(match_bf_id))
             jd = r.json()
-            for item in self.parse(jd):
+            for item in self.parse(jd, year):
                 item['betfair_id'] = _id  # 外键
                 log.logger.debug(item)
                 self.insert(item)
 
     @classmethod
-    def parse(cls, jd: Dict) -> Iterator[Dict]:
+    def parse(cls, jd: Dict, year: str) -> Iterator[Dict]:
+        """
+
+        :param jd:
+        :param year: 用于在交易时间前插入年份，函数外传入，保持一致性
+        """
 
         result = jd['result']
 
@@ -78,7 +84,7 @@ class BetfairDetailSpider(spider.MultiThreadSpider):
             return
 
         for record in big_list['win'] + big_list['draw'] + big_list['lose']:
-            # recode 格式类似 '110342|2|1|500|05-29 04:35'
+            # record 格式类似 '110342|2|1|500|05-29 04:35'
             temp = record.split('|')
 
             # 成交额
@@ -88,7 +94,7 @@ class BetfairDetailSpider(spider.MultiThreadSpider):
             # 价位
             price = round(float(temp[3]) / 100, 2)
             # 交易时间
-            time = datetime.datetime.today().strftime('%Y-') + temp[4]
+            time = f'{year}-{temp[4]}'
             # 总交易额
             total_trade = int(result['bfMatch']['homeAmount'])\
                           + int(result['bfMatch']['drawAmount'])\
@@ -106,7 +112,8 @@ class BetfairDetailSpider(spider.MultiThreadSpider):
 
 
 def main() -> None:
-    mysql_sql = 'SELECT id, match_bf_id FROM {}'.format(MYSQL_TABLE_BETFAIR)
+    today_format = datetime.date.today().strftime('%Y-%m-%d')
+    mysql_sql = f'SELECT id, match_bf_id FROM {MYSQL_TABLE_BETFAIR} WHERE start_time >= "{today_format}"'
     BetfairDetailSpider.create_task_list(MYSQL_CONFIG, mysql_sql)
 
     # 从产品列表页抓取部分数据
