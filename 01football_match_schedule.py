@@ -72,6 +72,7 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
             guest_rank = match['guRank']
             odds = match['odds']
             yield {
+                'remote_id': match['id'],
                 'start_time': match['time'],
                 'league': match['leagueName'],
                 'home_name': match['hoTeamName'],

@@ -16,3 +16,4 @@ MYSQL_CONFIG = {
 MYSQL_TABLE_BETFAIR = 'betfair'
 MYSQL_TABLE_BETFAIR_DETAIL = 'betfair_detail'
 MYSQL_TABLE_FOOTBALL_MATCH_SCHEDULE = 'football_match_schedule'
+MYSQL_TABLE_FOOTBALL_MATCH = 'football_match'
