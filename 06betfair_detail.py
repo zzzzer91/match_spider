@@ -104,6 +104,7 @@ class BetfairDetailSpider(spider.MultiThreadSpider):
 
 def main() -> None:
     today_format = datetime.date.today().strftime('%Y-%m-%d')
+    # 只更新大于等于今天的数据
     mysql_sql = f'SELECT id, match_bf_id FROM {MYSQL_TABLE_BETFAIR} WHERE start_time >= "{today_format}"'
     BetfairDetailSpider.create_task_list(MYSQL_CONFIG, mysql_sql)
 
