@@ -64,10 +64,14 @@ class BetfairDetailSpider(spider.MultiThreadSpider):
             year = datetime.datetime.today().strftime('%Y')
             r = self.session.get(self.url_temp.format(match_bf_id))
             jd = r.json()
-            for item in self.parse(jd, year):
-                item['betfair_id'] = _id  # 外键
-                log.logger.debug(item)
-                self.insert(item)
+
+            if jd['status'] == 'success':
+                for item in self.parse(jd, year):
+                    item['betfair_id'] = _id  # 外键
+                    log.logger.debug(item)
+                    self.insert(item)
+            else:
+                log.logger.error(jd['msg'])
 
     @classmethod
     def parse(cls, jd: Dict, year: str) -> Iterator[Dict]:

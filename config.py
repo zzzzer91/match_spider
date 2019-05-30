@@ -15,3 +15,4 @@ MYSQL_CONFIG = {
 # 保存数据的表
 MYSQL_TABLE_BETFAIR = 'betfair'
 MYSQL_TABLE_BETFAIR_DETAIL = 'betfair_detail'
+MYSQL_TABLE_FOOTBALL_MATCH_SCHEDULE = 'betfair_detail'
