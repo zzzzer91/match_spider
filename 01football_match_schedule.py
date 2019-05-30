@@ -1,27 +1,4 @@
 """
-CREATE TABLE `football_match_schedule` (
-  `id` bigint(20) unsigned NOT NULL COMMENT '赛事编号，如20190404001。',
-  `type` tinyint(3) unsigned DEFAULT NULL COMMENT '赛事类型，如0表示足球，1表示篮球,这个字段废弃了，不需要入库。',
-  `start_time` datetime NOT NULL COMMENT '赛事开始时间，如2019-05-04 12:00。',
-  `league` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '联赛名称，如中超。',
-  `home_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '主队名称，如北京人和。',
-  `visitor_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '客队名称，如深圳佳兆业。',
-  `home_rank` tinyint(3) unsigned DEFAULT NULL COMMENT '主队排名，如15。',
-  `visitor_rank` tinyint(3) unsigned DEFAULT NULL COMMENT '客队排名如8。',
-  `handicap` decimal(6,2) DEFAULT NULL COMMENT '亚盘让球盘口，即时。',
-  `home_handicap_odds` decimal(6,2) DEFAULT NULL COMMENT '主队亚盘让球赔率，即时，如0.71。',
-  `visitor_handicap_odds` decimal(6,2) DEFAULT NULL COMMENT '客队亚盘让球赔率，即时，如1.17。',
-  `handicap_total` decimal(6,2) DEFAULT NULL COMMENT '亚盘大小球盘口，即时。',
-  `home_handicap_total_odds` decimal(6,2) DEFAULT NULL COMMENT '主队亚盘大小球赔率，即时，如1.12。',
-  `visitor_handicap_total_odds` decimal(6,2) DEFAULT NULL COMMENT '客队亚盘大小球赔率，即时，如0.72。',
-  `win_odds` decimal(6,2) DEFAULT NULL COMMENT '主胜欧赔赔率，即时，如1.10。',
-  `draw_odds` decimal(6,2) DEFAULT NULL COMMENT '主平欧赔赔率，即时，如7.00',
-  `lose_odds` decimal(6,2) DEFAULT NULL COMMENT '主负欧赔赔率，即时，如31.00。',
-  `cst_create` datetime DEFAULT current_timestamp() COMMENT 'CST 时区创建时间',
-  `cst_modified` datetime DEFAULT NULL ON UPDATE current_timestamp() COMMENT 'CST 时区修改时间',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-
 create:   2019-05-30
 modified:
 """
@@ -59,6 +36,7 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
         'lose_odds',
     }
 
+    # 球队排名字符串中可能还带联赛名，只提取排名
     RE_FIND_NUM = re.compile(r'\d+')
 
     def __init__(self,
@@ -90,14 +68,17 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
         matches = jd['matches']
 
         for match in matches:
+            host_rank = match['hoRank']
+            guest_rank = match['guRank']
             odds = match['odds']
             yield {
                 'start_time': match['time'],
                 'league': match['leagueName'],
                 'home_name': match['hoTeamName'],
                 'visitor_name': match['guTeamName'],
-                'home_rank': cls.RE_FIND_NUM.findall(match['hoRank'])[0] if match['hoRank'] else None,
-                'visitor_rank': cls.RE_FIND_NUM.findall(match['guRank'])[0] if match['guRank'] else None,
+                # 字符串中可能还带联赛名，只提取排名
+                'home_rank': cls.RE_FIND_NUM.findall(host_rank)[0] if host_rank else None,
+                'visitor_rank': cls.RE_FIND_NUM.findall(guest_rank)[0] if guest_rank else None,
                 'handicap': odds['let'],
                 'home_handicap_odds': odds['letHm'],
                 'visitor_handicap_odds': odds['letAw'],

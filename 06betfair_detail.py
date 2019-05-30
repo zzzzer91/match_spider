@@ -1,17 +1,4 @@
 """
-CREATE TABLE `betfair_detail` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `betfair_id` bigint(20) unsigned NOT NULL COMMENT 'betfair表中的赛事编号，如20190405001。',
-  `turnover` int(10) unsigned NOT NULL COMMENT '成交额，如3000。',
-  `status` char(8) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '交易状态，如主胜买入。',
-  `price` decimal(10,2) NOT NULL COMMENT '交易价格，如1.89。',
-  `proportion` decimal(5,2) NOT NULL COMMENT '交易占比，如12.34。',
-  `time` datetime NOT NULL COMMENT '交易时间，如2019-05-04 09:00。',
-  `cst_create` datetime DEFAULT current_timestamp() COMMENT 'CST 时区创建时间',
-  `cst_modified` datetime DEFAULT NULL ON UPDATE current_timestamp() COMMENT 'CST 时区修改时间',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-
 create:   2019-05-29
 modified:
 """

@@ -1,32 +1,4 @@
 """
-CREATE TABLE `betfair` (
-  `id` bigint(20) unsigned NOT NULL COMMENT '赛事编号，如20190405001。',
-  `start_time` datetime NOT NULL COMMENT '赛事开始时间，如2019-05-0412:00。',
-  `betfair_win_odds` decimal(8,2) DEFAULT NULL COMMENT '主胜必发赔率，如1.10。',
-  `betfair_draw_odds` decimal(8,2) DEFAULT NULL COMMENT '主平必发赔率，如7.00。',
-  `betfair_lose_odds` decimal(8,2) DEFAULT NULL COMMENT '主负必发赔率，如31.00。',
-  `betfair_win_index` decimal(8,2) DEFAULT NULL COMMENT '主胜必发指数，如52.93。',
-  `betfair_draw_index` decimal(8,2) DEFAULT NULL COMMENT '主平必发指数，如21.34。',
-  `betfair_lose_index` decimal(8,2) DEFAULT NULL COMMENT '主负必发指数，如25.71。',
-  `avg_win_odds` decimal(8,2) DEFAULT NULL COMMENT '主胜百家欧赔赔率，如1.10。',
-  `avg_draw_odds` decimal(8,2) DEFAULT NULL COMMENT '主平百家欧赔赔率，如7.00。',
-  `avg_lose_odds` decimal(8,2) DEFAULT NULL COMMENT '主负百家欧赔赔率，如31.00。',
-  `total` int(10) unsigned DEFAULT NULL COMMENT '成交总量，如3000000',
-  `betfair_win_proportion` decimal(5,2) DEFAULT NULL COMMENT '主胜交易占比，如74.99。',
-  `betfair_draw_proportion` decimal(5,2) DEFAULT NULL COMMENT '主平交易占比，如15.13。',
-  `betfair_lose_proportion` decimal(5,2) DEFAULT NULL COMMENT '主负交易占比，如10.18。',
-  `betfair_win_large_proportion` decimal(5,2) DEFAULT NULL COMMENT '主胜大额交易占比，如76.89。',
-  `betfair_draw_large_proportion` decimal(5,2) DEFAULT NULL COMMENT '主平大额交易占比，如21.27。',
-  `betfair_lose_large_proportion` decimal(5,2) DEFAULT NULL COMMENT '主负大额交易占比，如1.84。',
-  `cst_create` datetime DEFAULT current_timestamp() COMMENT 'CST 时区创建时间',
-  `cst_modified` datetime DEFAULT NULL ON UPDATE current_timestamp() COMMENT 'CST 时区修改时间',
-  `league` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '联赛名称',
-  `home_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '主队名称',
-  `visitor_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '客队名称',
-  `match_bf_id` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '网站的比赛 id，用于获取 detail',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='必发数据爬取'
-
 create:   2019-05-28
 modified:
 """
