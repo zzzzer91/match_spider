@@ -103,9 +103,10 @@ class BetfairDetailSpider(spider.MultiThreadSpider):
 
 
 def main() -> None:
-    today_format = datetime.date.today().strftime('%Y-%m-%d')
-    # 只更新大于等于今天的数据
-    mysql_sql = f'SELECT id, match_bf_id FROM {MYSQL_TABLE_BETFAIR} WHERE start_time >= "{today_format}"'
+    today_format = datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+    # 只更新比赛开始时间大于当前时间的数据
+    mysql_sql = f'SELECT id, match_bf_id FROM {MYSQL_TABLE_BETFAIR} WHERE start_time > "{today_format}"'
+    log.logger.debug(mysql_sql)
     BetfairDetailSpider.create_task_list(MYSQL_CONFIG, mysql_sql)
 
     spider.run_spider(
