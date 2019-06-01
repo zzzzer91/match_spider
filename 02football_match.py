@@ -75,7 +75,7 @@ class FootballMatchSpider(spider.MultiThreadSpider):
 
         for i, item in enumerate(self.parse(jd, t_format2), 1):
             log.logger.debug(item)
-            # self.insert_or_update(item, self.UPDATE_FIELD)
+            self.insert_or_update(item, self.UPDATE_FIELD)
 
     @classmethod
     def parse(cls, jd: Dict, date_format: str) -> Iterator[Dict]:
