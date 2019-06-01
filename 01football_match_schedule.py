@@ -53,12 +53,10 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
 
         # 比赛日程安排是提取明天的
         tomorrow = datetime.date.today() + datetime.timedelta(1)
-        t_format = tomorrow.strftime('%Y-%m-%d')
-        t_format2 = tomorrow.strftime('%Y%m%d')
-        r = self.session.get(self.url_temp.format(t_format))
+        r = self.session.get(self.url_temp.format(tomorrow.strftime('%Y-%m-%d')))
         jd = r.json()
 
-        for i, item in enumerate(self.parse(jd, t_format2), 1):
+        for i, item in enumerate(self.parse(jd, tomorrow.strftime('%Y%m%d')), 1):
             item['type'] = 0
             log.logger.debug(item)
             self.insert_or_update(item, self.UPDATE_FIELD)

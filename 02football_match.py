@@ -66,14 +66,12 @@ class FootballMatchSpider(spider.MultiThreadSpider):
         self.session.headers.update(self.headers_json)
 
     def run(self) -> None:
-
+        # 即时比分抓取今天的
         today = datetime.date.today()
-        t_format = today.strftime('%Y-%m-%d')
-        t_format2 = today.strftime('%Y%m%d')
-        r = self.session.get(self.url_temp.format(t_format))
+        r = self.session.get(self.url_temp.format(today.strftime('%Y-%m-%d')))
         jd = r.json()
 
-        for i, item in enumerate(self.parse(jd, t_format2), 1):
+        for i, item in enumerate(self.parse(jd, today.strftime('%Y%m%d')), 1):
             log.logger.debug(item)
             self.insert_or_update(item, self.UPDATE_FIELD)
 
