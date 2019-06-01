@@ -1,4 +1,5 @@
-"""
+"""足球比赛日程安排
+
 create:   2019-05-30
 modified:
 """
@@ -50,28 +51,33 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
 
     def run(self) -> None:
 
-        today = datetime.date.today()
-        today_format = today.strftime('%Y-%m-%d')
-        today_format2 = today.strftime('%Y%m%d')
-        r = self.session.get(self.url_temp.format(today_format))
+        # 比赛日程安排是提取明天的
+        tomorrow = datetime.date.today() + datetime.timedelta(1)
+        t_format = tomorrow.strftime('%Y-%m-%d')
+        t_format2 = tomorrow.strftime('%Y%m%d')
+        r = self.session.get(self.url_temp.format(t_format))
         jd = r.json()
 
-        for i, item in enumerate(self.parse(jd), 1):
-            item['id'] = f'{today_format2}{i:0>3d}'
+        for i, item in enumerate(self.parse(jd, t_format2), 1):
             item['type'] = 0
             log.logger.debug(item)
             self.insert_or_update(item, self.UPDATE_FIELD)
 
     @classmethod
-    def parse(cls, jd: Dict) -> Iterator[Dict]:
+    def parse(cls, jd: Dict, date_format: str) -> Iterator[Dict]:
 
         matches = jd['matches']
 
         for match in matches:
+            # 提取比赛序号
+            ser_num = cls.RE_FIND_NUM.findall(match['serNum'])[0]
             host_rank = match['hoRank']
             guest_rank = match['guRank']
             odds = match['odds']
+
             yield {
+                'id': f'{date_format}{ser_num}',
+                'type': 0,
                 'remote_id': match['id'],
                 'start_time': match['time'],
                 'league': match['leagueName'],
@@ -80,7 +86,7 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
                 # 字符串中可能还带联赛名，只提取排名
                 'home_rank': cls.RE_FIND_NUM.findall(host_rank)[0] if host_rank else None,
                 'visitor_rank': cls.RE_FIND_NUM.findall(guest_rank)[0] if guest_rank else None,
-                'handicap': odds['let'],
+                'handicap': odds['let'].replace('-', '*'),
                 'home_handicap_odds': odds['letHm'],
                 'visitor_handicap_odds': odds['letAw'],
                 'handicap_total': odds['size'],
