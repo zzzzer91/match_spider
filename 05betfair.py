@@ -90,8 +90,8 @@ class BetfairSpider(spider.MultiThreadSpider):
             _id = f'{date_format}{match_index}'
 
             # 联赛名，可能为空
-            league_element = title_box_element.xpath('./span[@class="c_dgreen"]/text()')
-            league = league_element[0].strip() if league_element else None
+            league = title_box_element.xpath('./span[@class="c_dgreen"]/text()')
+            league = league[0].strip() if league else None
             # 主队名
             home_name = title_box_element.xpath('./span[@class="c_yellow"]/span[1]/text()')[0].strip()
             # 客队名
