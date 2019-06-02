@@ -74,7 +74,6 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
 
             yield {
                 'id': f'{date_format}{ser_num}',
-                'type': 0,
                 'remote_id': match['id'],
                 'start_time': match['time'],
                 'league': match['leagueName'],

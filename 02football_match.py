@@ -98,7 +98,6 @@ class FootballMatchSpider(spider.MultiThreadSpider):
 
             yield {
                 'id': f'{date_format}{ser_num}',
-                'type': 0,
 
                 'remote_id': match['id'],
 
