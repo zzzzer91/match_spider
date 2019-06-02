@@ -71,7 +71,7 @@ class FootballMatchSpider(spider.MultiThreadSpider):
         r = self.session.get(self.url_temp.format(today.strftime('%Y-%m-%d')))
         jd = r.json()
 
-        for i, item in enumerate(self.parse(jd, today.strftime('%Y%m%d')), 1):
+        for item in self.parse(jd, today.strftime('%Y%m%d')):
             log.logger.debug(item)
             self.insert_or_update(item, self.UPDATE_FIELD)
 
