@@ -107,7 +107,7 @@ class BasketballMatchScheduleSpider(spider.MultiThreadSpider):
                 lose_odds = lose_odds[0].strip() if lose_odds else None
 
                 # 亚盘盘口
-                xpath_str = './tbody/tr[{}]/td[starts-with(@tag, "rfOdds")]/span[@style!="display:none;"]/a/text()'
+                xpath_str = './tbody/tr[{}]/td[starts-with(@tag, "rfOdds")]/span[1]/a/text()'
                 handicap = table.xpath(xpath_str.format(1))[0].strip()
                 handicap2 = table.xpath(xpath_str.format(2))[0].strip()
                 if not handicap:
@@ -117,19 +117,19 @@ class BasketballMatchScheduleSpider(spider.MultiThreadSpider):
                         handicap = None
 
                 # 亚盘赔率
-                xpath_str = './tbody/tr[{}]/td[@tag="{}RfOdds"]/span[@style!="display:none;"]/a/text()'
+                xpath_str = './tbody/tr[{}]/td[@tag="{}RfOdds"]/span[1]/a/text()'
                 home_handicap_odds = table.xpath(xpath_str.format(1, 'h'))[0].strip()
                 home_handicap_odds = home_handicap_odds if home_handicap_odds else None
                 visitor_handicap_odds = table.xpath(xpath_str.format(2, 'g'))[0].strip()
                 visitor_handicap_odds = visitor_handicap_odds if visitor_handicap_odds else None
 
                 # 大小球盘口
-                xpath_str = './tbody/tr[{}]/td[@tag="dxfOdds"]/span[@style!="display:none;"]/a/text()'
+                xpath_str = './tbody/tr[{}]/td[@tag="dxfOdds"]/span[1]/a/text()'
                 handicap_total = table.xpath(xpath_str.format(1))[0].strip()
                 handicap_total = handicap_total if handicap_total else None
 
                 # 大小球赔率
-                xpath_str = './tbody/tr[{}]/td[@tag="{}DxfOdds"]/span[@style!="display:none;"]/a/text()'
+                xpath_str = './tbody/tr[{}]/td[@tag="{}DxfOdds"]/span[1]/a/text()'
                 home_handicap_total_odds = table.xpath(xpath_str.format(1, 'h'))[0].strip()
                 home_handicap_total_odds = home_handicap_total_odds if home_handicap_total_odds else None
                 visitor_handicap_total_odds = table.xpath(xpath_str.format(2, 'g'))[0].strip()
