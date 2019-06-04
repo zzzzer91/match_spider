@@ -86,7 +86,7 @@ class BetfairDetailSpider(spider.MultiThreadSpider):
             # 价位
             price = round(float(temp[3]) / 100, 2)
             # 交易时间
-            time = f'{year}-{temp[4]}'
+            transaction_time = f'{year}-{temp[4]}'
             # 总交易额
             total_trade = int(result['bfMatch']['homeAmount'])\
                           + int(result['bfMatch']['drawAmount'])\
@@ -98,7 +98,7 @@ class BetfairDetailSpider(spider.MultiThreadSpider):
                 'turnover': turnover,
                 'status': status,
                 'price': price,
-                'time': time,
+                'transaction_time': transaction_time,
                 'proportion': proportion
             }
 
