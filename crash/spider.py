@@ -151,6 +151,7 @@ def run_spider(
         thread_list.append(t)
 
     for t in thread_list:
+        log.logger.info(f'{t.__class__.__name__} {t.name} 启动')
         t.start()
 
     try:

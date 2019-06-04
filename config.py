@@ -1,5 +1,11 @@
 """配置文件"""
 
+from crash import log
+
+# 日志级别
+LOG_LEVEL = log.DEBUG
+del log
+
 # 使用线程数量
 THREAD_NUM = 1
 

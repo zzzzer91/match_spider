@@ -17,7 +17,7 @@ from config import *
 # 提升为异常，可以过滤掉不符合字段类型的数据
 warnings.filterwarnings('error')
 
-log.logger.set_log_level(log.DEBUG)
+log.logger.set_log_level(LOG_LEVEL)
 
 
 class FootballMatchSpider(spider.MultiThreadSpider):
