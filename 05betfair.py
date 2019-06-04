@@ -58,12 +58,22 @@ class BetfairSpider(spider.MultiThreadSpider):
 
     def run(self) -> None:
 
-        today_format = datetime.date.today().strftime('%Y%m%d')
-        r = self.session.get(self.url_temp.format(today_format))
+        today = datetime.datetime.today()
+
+        # 竞彩时间计算规则
+        # 昨天中午 12 点后，到今天中午 12 点前的日期，
+        # 是今天日期 - 1
+        current_hour = today.hour
+        if current_hour < 12:
+            today -= datetime.timedelta(1)
+        date_format = today.strftime('%Y%m%d')
+
+        url = self.url_temp.format(date_format)
+        r = self.session.get(url)
         jd = r.json()
 
         if jd['status'] == 'success':
-            for item in self.parse(jd['result']['bf_page'], today_format):
+            for item in self.parse(jd['result']['bf_page'], date_format):
                 log.logger.debug(item)
                 self.insert_or_update(item, self.UPDATE_FIELD)
         else:  # 访问失败，如请求未来日期，日期不合法

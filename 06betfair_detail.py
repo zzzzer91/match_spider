@@ -48,8 +48,10 @@ class BetfairDetailSpider(spider.MultiThreadSpider):
             except queue.Empty:
                 break
 
-            year = datetime.datetime.today().strftime('%Y')
-            r = self.session.get(self.url_temp.format(match_bf_id))
+            year = datetime.date.today().year
+            url = self.url_temp.format(match_bf_id)
+            log.logger.debug(url)
+            r = self.session.get(url)
             jd = r.json()
 
             if jd['status'] == 'success':
@@ -61,7 +63,7 @@ class BetfairDetailSpider(spider.MultiThreadSpider):
                 log.logger.error(jd['msg'])
 
     @classmethod
-    def parse(cls, jd: Dict, year: str) -> Iterator[Dict]:
+    def parse(cls, jd: Dict, year: int) -> Iterator[Dict]:
         """
 
         :param jd:
