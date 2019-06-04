@@ -50,7 +50,6 @@ class BetfairDetailSpider(spider.MultiThreadSpider):
 
             year = datetime.date.today().year
             url = self.url_temp.format(match_bf_id)
-            log.logger.debug(url)
             r = self.session.get(url)
             jd = r.json()
 

@@ -66,7 +66,8 @@ class BasketballMatchSpider(spider.MultiThreadSpider):
     def run(self) -> None:
 
         today_format = datetime.date.today().strftime('%Y%m%d')
-        r = self.session.get(self.url_temp)
+        url = self.url_temp
+        r = self.session.get(url)
 
         for item in self.parse(r.text, today_format):
             log.logger.debug(item)

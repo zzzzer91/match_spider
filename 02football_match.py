@@ -68,7 +68,8 @@ class FootballMatchSpider(spider.MultiThreadSpider):
     def run(self) -> None:
         # 即时比分抓取今天的
         today = datetime.date.today()
-        r = self.session.get(self.url_temp.format(today.strftime('%Y-%m-%d')))
+        url = self.url_temp.format(today.strftime('%Y-%m-%d'))
+        r = self.session.get(url)
         jd = r.json()
 
         for item in self.parse(jd, today.strftime('%Y%m%d')):

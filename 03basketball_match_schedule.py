@@ -55,7 +55,8 @@ class BasketballMatchScheduleSpider(spider.MultiThreadSpider):
 
     def run(self) -> None:
 
-        r = self.session.get(self.url_temp)
+        url = self.url_temp
+        r = self.session.get(url)
 
         for item in self.parse(r.text):
             log.logger.debug(item)
