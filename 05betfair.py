@@ -58,9 +58,6 @@ class BetfairSpider(spider.MultiThreadSpider):
 
     def run(self) -> None:
 
-        # 竞彩时间计算规则
-        # 昨天中午 12 点后，到今天中午 12 点前的日期，
-        # 是今天日期 - 1
         today = datetime.datetime.today()
         current_hour = today.hour
         if current_hour < 12:
