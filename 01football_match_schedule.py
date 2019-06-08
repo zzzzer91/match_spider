@@ -52,7 +52,11 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
     def run(self) -> None:
 
         # 比赛日程安排是提取明天的
-        tomorrow = datetime.date.today() + datetime.timedelta(1)
+        tomorrow = datetime.datetime.today()
+        current_hour = tomorrow.hour
+        if current_hour >= 12:
+            tomorrow += datetime.timedelta(1)
+
         url = self.url_temp.format(tomorrow.strftime('%Y-%m-%d'))
         r = self.session.get(url)
         jd = r.json()
@@ -77,9 +81,9 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
                 'id': f'{date_format}{ser_num}',
                 'remote_id': match['id'],
                 'start_time': match['time'],
-                'league': match['leagueName'],
-                'home_name': match['hoTeamName'],
-                'visitor_name': match['guTeamName'],
+                'league': match['leagueSimpName'],
+                'home_name': match['hoTeamSimpName'],
+                'visitor_name': match['guTeamSimpName'],
                 # 字符串中可能还带联赛名，只提取排名
                 'home_rank': cls.RE_FIND_NUM.findall(host_rank)[0] if host_rank else None,
                 'visitor_rank': cls.RE_FIND_NUM.findall(guest_rank)[0] if guest_rank else None,

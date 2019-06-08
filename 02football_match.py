@@ -67,7 +67,14 @@ class FootballMatchSpider(spider.MultiThreadSpider):
 
     def run(self) -> None:
         # 即时比分抓取今天的
-        today = datetime.date.today()
+        # 竞彩时间计算规则
+        # 昨天中午 12 点后，到今天中午 12 点前的日期，
+        # 是今天日期 - 1
+        today = datetime.datetime.today()
+        current_hour = today.hour
+        if current_hour < 12:
+            today -= datetime.timedelta(1)
+
         url = self.url_temp.format(today.strftime('%Y-%m-%d'))
         r = self.session.get(url)
         jd = r.json()
@@ -91,11 +98,11 @@ class FootballMatchSpider(spider.MultiThreadSpider):
             # -1 代表比赛完，0 代表还未开始，3 代表进行中
             status = match['status']
             if status == 0:
-                compete_time = f'未'
+                compete_time = '未'
             elif status == -1:
-                compete_time = f'{compete_time}完'
+                compete_time = '90+' if compete_time > 90 else f'{compete_time}'
             else:
-                compete_time = f'{compete_time}中'
+                compete_time = f'{compete_time}'
 
             yield {
                 'id': f'{date_format}{ser_num}',
@@ -103,9 +110,9 @@ class FootballMatchSpider(spider.MultiThreadSpider):
                 'remote_id': match['id'],
 
                 'start_time': match['time'],
-                'league': match['leagueName'],
-                'home_name': match['hoTeamName'],
-                'visitor_name': match['guTeamName'],
+                'league': match['leagueSimpName'],
+                'home_name': match['hoTeamSimpName'],
+                'visitor_name': match['guTeamSimpName'],
                 # 字符串中可能还带联赛名，只提取排名
                 'home_rank': cls.RE_FIND_NUM.findall(host_rank)[0] if host_rank else None,
                 'visitor_rank': cls.RE_FIND_NUM.findall(guest_rank)[0] if guest_rank else None,
