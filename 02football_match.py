@@ -100,12 +100,12 @@ class FootballMatchSpider(spider.MultiThreadSpider):
             if status == 0:
                 compete_time = '未'
             elif status == -1:
-                compete_time = '90+' if compete_time > 90 else f'{compete_time}'
+                compete_time = '完'
             else:
-                compete_time = f'{compete_time}'
+                compete_time = '90+' if compete_time > 90 else f'{compete_time}'
 
             yield {
-                'id': f'{date_format}{ser_num}',
+                'id': f'{date_format}{ser_num}',  # 与 betfair 中的 id 完全对应
 
                 'remote_id': match['id'],
 

@@ -78,7 +78,7 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
             odds = match['odds']
 
             yield {
-                'id': f'{date_format}{ser_num}',
+                'id': f'{date_format}{ser_num}',  # 与 betfair 中的 id 完全对应
                 'remote_id': match['id'],
                 'start_time': match['time'],
                 'league': match['leagueSimpName'],
