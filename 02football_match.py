@@ -67,9 +67,9 @@ class FootballMatchSpider(spider.MultiThreadSpider):
 
     def run(self) -> None:
         # 即时比分抓取今天的
-        # 竞彩时间计算规则
-        # 昨天中午 12 点后，到今天中午 12 点前的日期，
-        # 是今天日期 - 1
+        # 足球竞彩时间计算规则：
+        # 在 url 中请求今天日期，返回的是
+        # 今天中午 12 点（包括 12 点）后，到明天中午 12 点前的比赛
         today = datetime.datetime.today()
         current_hour = today.hour
         if current_hour < 12:
