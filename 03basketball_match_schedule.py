@@ -72,7 +72,8 @@ class BasketballMatchScheduleSpider(spider.MultiThreadSpider):
         url = table_all_element.xpath('//div[@class="ul_f"]/a[@class="present"]/@href')[0]
         date_format = parse.parse_qs(parse.urlparse(url).query)['dateStr'][0]
         # 做一些转换
-        date_format = datetime.datetime.strptime(date_format, '%Y-%m-%d').strftime('%Y%m%d')
+        dt = datetime.datetime.strptime(date_format, '%Y-%m-%d')
+        date_format = dt.strftime('%Y%m%d')
 
         i = 0
         for table in table_all_element:
