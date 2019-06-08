@@ -95,7 +95,7 @@ class FootballMatchSpider(spider.MultiThreadSpider):
             odds = match['odds']
             compete_time = match['min']
 
-            # -1 代表比赛完，0 代表还未开始，3 代表进行中
+            # -1 代表比赛完，0 代表还未开始，3 代表进行中（应该）
             status = match['status']
             if status == 0:
                 compete_time = '未'
