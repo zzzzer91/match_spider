@@ -31,6 +31,8 @@ class BetfairDetailSpider(spider.MultiThreadSpider):
         '0': '客胜', '1': '平局', '3': '主胜'
     }
 
+    sql_delete_temp = 'DELETE FROM {} WHERE betfair_id={{}}'
+
     def __init__(self,
                  name: str,
                  mysql_config: MysqlConfig,
@@ -39,6 +41,8 @@ class BetfairDetailSpider(spider.MultiThreadSpider):
 
         # 改成抓取 json 数据的头部
         self.session.headers.update(self.headers_json)
+
+        self.sql_delete: Optional[str] = None
 
     def run(self) -> None:
 
@@ -54,6 +58,12 @@ class BetfairDetailSpider(spider.MultiThreadSpider):
             jd = r.json()
 
             if jd['status'] == 'success':
+                # 删除原有记录
+                if not self.sql_delete:
+                    self.sql_delete = self.sql_delete_temp.format(MYSQL_TABLE_BETFAIR_DETAIL)
+                # 已经设置了 autocommit
+                self.cursor.execute(self.sql_delete.format(_id))
+
                 for item in self.parse(jd, year):
                     item['betfair_id'] = _id  # 外键
                     log.logger.debug(item)
@@ -72,10 +82,8 @@ class BetfairDetailSpider(spider.MultiThreadSpider):
         result = jd['result']
 
         big_list = result['bigTradeList']['bigList']
-        if not big_list['all']:
-            return
 
-        for record in big_list['win'] + big_list['draw'] + big_list['lose']:
+        for record in big_list['all']:
             # record 格式类似 '110342|2|1|500|05-29 04:35'
             temp = record.split('|')
 
