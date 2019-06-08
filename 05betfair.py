@@ -149,11 +149,11 @@ class BetfairSpider(spider.MultiThreadSpider):
             betfair_lose_large_proportion = large_proportion_element.xpath('./div[2]/p[3]/span[2]/text()')[0].strip().rstrip('%')
 
             yield {
-                'id': _id,
-                'league': league,
-                'home_name': home_name,
-                'visitor_name': visitor_name,
-                'start_time': start_time,
+                'id': _id,  # football_match 的 id 和这里的 id 是完全对应的
+                # 'league': league,  # 这四个字段不需要
+                # 'home_name': home_name,
+                # 'visitor_name': visitor_name,
+                # 'start_time': start_time,
                 'match_bf_id': match_bf_id,
                 'betfair_win_odds': betfair_win_odds,
                 'betfair_win_index': betfair_win_index,
