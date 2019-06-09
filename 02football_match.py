@@ -93,16 +93,11 @@ class FootballMatchSpider(spider.MultiThreadSpider):
             host_rank = match['hoRank']
             guest_rank = match['guRank']
             odds = match['odds']
-            compete_time = match['min']
+            match_min = match['min']
 
-            # -1 代表比赛完，0 代表还未开始，3 代表进行中（应该）
             status = match['status']
-            if status == 0:
-                compete_time = '未'
-            elif status == -1:
-                compete_time = '完'
-            else:
-                compete_time = '90+' if compete_time > 90 else f'{compete_time}'
+
+            compete_time = cls._compute_compete_time(status, match_min)
 
             yield {
                 'id': f'{date_format}{ser_num}',  # 与 betfair 中的 id 完全对应
@@ -143,6 +138,33 @@ class FootballMatchSpider(spider.MultiThreadSpider):
                 'draw_odds': odds['avgHm'],
                 'lose_odds': odds['avgAw'],
             }
+
+    @staticmethod
+    def _compute_compete_time(status: int, match_min: int) -> str:
+        """目标网站生成比赛状态的前端代码 Python 版"""
+
+        if status == 1:  # 上半场
+            compete_time = '45+' if match_min > 45 else f'{match_min}'
+        elif status == 3 or status == 4 or status == 5:  # 下半场、加时、点球
+            compete_time = '90+' if match_min > 90 else f'{match_min}'
+        elif status == 2:  # 中场
+            compete_time = '中'
+        elif status == -1:  # 完场
+            compete_time = '完'
+        elif status == -10:
+            compete_time = '取消'
+        elif status == -11:
+            compete_time = '待定'
+        elif status == -12:
+            compete_time = '腰斩'
+        elif status == -13:
+            compete_time = '中断'
+        elif status == -14:
+            compete_time = '推迟'
+        else:
+            compete_time = '未'
+
+        return compete_time
 
 
 def main() -> None:
