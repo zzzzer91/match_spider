@@ -75,11 +75,21 @@ class FootballMatchSpider(spider.MultiThreadSpider):
         if current_hour < 12:
             today -= datetime.timedelta(1)
 
-        url = self.url_temp.format(today.strftime('%Y-%m-%d'))
+        self.fetch(today)
+
+        # 有的比赛会比过 12 点
+        # 因为过 12 点，就算昨天的了，所以会导致不正确更新
+        # 这里在 1 小时内，再把昨天的数据抓下
+        if 12 <= current_hour < 13:
+            self.fetch(today - datetime.timedelta(1))
+
+    def fetch(self, date: datetime.datetime) -> None:
+
+        url = self.url_temp.format(date.strftime('%Y-%m-%d'))
         r = self.session.get(url)
         jd = r.json()
 
-        for item in self.parse(jd, today.strftime('%Y%m%d')):
+        for item in self.parse(jd, date.strftime('%Y%m%d')):
             log.logger.debug(item)
             self.insert_or_update(item, self.UPDATE_FIELD)
 
