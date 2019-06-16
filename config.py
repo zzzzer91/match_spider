@@ -14,7 +14,7 @@ MYSQL_CONFIG = {
     'port': 3306,
     'user': 'root',
     'password': 'yousonofabitch',
-    'db': 'matches',
+    'db': 'topicBet',
 }
 
 # 保存数据的表
