@@ -12,7 +12,7 @@ if [ ! -d "${LOG_PATH}" ]; then
   mkdir ${LOG_PATH}
 fi
 
-script_array=('01football_match_schedule' '02football_match' '03basketball_match_schedule' '04basketball_match' '05betfair' '06betfair_detail')
+script_array=('football_match_schedule' 'football_match' 'basketball_match_schedule' 'basketball_match' 'betfair' 'betfair_detail')
 
 # script_array[@] 会获取所有数组成员
 for var in ${script_array[@]}
