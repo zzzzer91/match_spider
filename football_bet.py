@@ -24,7 +24,7 @@ class FootballBetSpider(FootballMatchSpider):
 
     # sql 插入已存在主键纪录时，更新如下字段
     # 比赛开始后，赔率相关不更新
-    UPDATE_FIELD_AFTER_MATCH_START = {
+    AFTER_MATCH_START_UPDATE_FIELD = {
         'compete_time',
         'home_half_score',
         'visitor_half_score',
@@ -69,7 +69,7 @@ class FootballBetSpider(FootballMatchSpider):
             if item['compete_time'] in self.MATCH_NOT_START_FLAG:
                 update_field = self.UPDATE_FIELD
             else:
-                update_field = self.UPDATE_FIELD_AFTER_MATCH_START
+                update_field = self.AFTER_MATCH_START_UPDATE_FIELD
 
             self.insert_or_update(item, update_field)
 
