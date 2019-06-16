@@ -8,7 +8,6 @@ import logging
 
 ERROR = logging.ERROR
 WARNING = logging.WARNING
-WARN = logging.WARNING
 INFO = logging.INFO
 DEBUG = logging.DEBUG
 
