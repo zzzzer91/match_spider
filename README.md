@@ -2,6 +2,10 @@
 
 ## 定时
 
+```bash
+crontab -e
+```
+
 ```crontab
-*/5 * * * * /usr/bin/bash /root/match/run.sh
+*/1 * * * * /usr/bin/bash /root/match/run.sh
 ```
