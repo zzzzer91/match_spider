@@ -57,11 +57,15 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
         if current_hour >= 12:
             tomorrow += datetime.timedelta(1)
 
-        url = self.url_temp.format(tomorrow.strftime('%Y-%m-%d'))
+        self.fetch(tomorrow)
+
+    def fetch(self, date: datetime.datetime) -> None:
+
+        url = self.url_temp.format(date.strftime('%Y-%m-%d'))
         r = self.session.get(url)
         jd = r.json()
 
-        for item in self.parse(jd, tomorrow.strftime('%Y%m%d')):
+        for item in self.parse(jd, date.strftime('%Y%m%d')):
             log.logger.debug(item)
             self.insert_or_update(item, self.UPDATE_FIELD)
 
@@ -75,6 +79,7 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
             ser_num = cls.RE_FIND_NUM.findall(match['serNum'])[0]
             host_rank = match['hoRank']
             guest_rank = match['guRank']
+
             odds = match['odds']
 
             handicap = cls._compute_handicap(odds['let'].replace('-', '*'))
@@ -89,6 +94,7 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
                 # 字符串中可能还带联赛名，只提取排名
                 'home_rank': cls.RE_FIND_NUM.findall(host_rank)[0] if host_rank else None,
                 'visitor_rank': cls.RE_FIND_NUM.findall(guest_rank)[0] if guest_rank else None,
+
                 'handicap': handicap,
                 'home_handicap_odds': odds['letHm'],
                 'visitor_handicap_odds': odds['letAw'],
@@ -101,8 +107,11 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
             }
 
     @staticmethod
-    def _compute_handicap(handicap: str) -> str:
+    def _compute_handicap(handicap: str) -> Optional[str]:
         """去除小数字符串结尾的 0"""
+
+        if handicap is None:
+            return None
 
         if handicap.endswith('.00'):
             handicap = handicap[:-3]

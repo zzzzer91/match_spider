@@ -4,12 +4,12 @@ create:   2019-05-31
 modified:
 """
 
-import re
 import warnings
 import datetime
 
 from crash import spider, log
 from crash.types import *
+from football_match_schedule import FootballMatchScheduleSpider
 
 from config import *
 
@@ -20,9 +20,7 @@ warnings.filterwarnings('error')
 log.logger.set_log_level(LOG_LEVEL)
 
 
-class FootballMatchSpider(spider.MultiThreadSpider):
-
-    url_temp = 'https://live.13322.com/lotteryScore/list?getExtra=1&lang=zh&date={}'
+class FootballMatchSpider(FootballMatchScheduleSpider):
 
     # sql 插入已存在主键纪录时，更新如下字段
     UPDATE_FIELD = {
@@ -53,17 +51,12 @@ class FootballMatchSpider(spider.MultiThreadSpider):
         'lose_odds',
     }
 
-    # 球队排名字符串中可能还带联赛名，只提取排名
-    RE_FIND_NUM = re.compile(r'\d+')
-
     def __init__(self,
                  name: str,
                  mysql_config: MysqlConfig,
                  table_save:  str) -> None:
-        super().__init__(name, mysql_config, table_save)
 
-        # 改成抓取 json 数据的头部
-        self.session.headers.update(self.headers_json)
+        super().__init__(name, mysql_config, table_save)
 
     def run(self) -> None:
         # 即时比分抓取今天的
@@ -83,32 +76,21 @@ class FootballMatchSpider(spider.MultiThreadSpider):
         if 12 <= current_hour < 13:
             self.fetch(today - datetime.timedelta(1))
 
-    def fetch(self, date: datetime.datetime) -> None:
-
-        url = self.url_temp.format(date.strftime('%Y-%m-%d'))
-        r = self.session.get(url)
-        jd = r.json()
-
-        for item in self.parse(jd, date.strftime('%Y%m%d')):
-            log.logger.debug(item)
-            self.insert_or_update(item, self.UPDATE_FIELD)
-
     @classmethod
     def parse(cls, jd: Dict, date_format: str) -> Iterator[Dict]:
 
         matches = jd['matches']
 
-        for match in matches:
-            ser_num = cls.RE_FIND_NUM.findall(match['serNum'])[0]
-            host_rank = match['hoRank']
-            guest_rank = match['guRank']
-            odds = match['odds']
-            match_min = match['min']
+        for item, match in zip(super().parse(jd, date_format), matches):
 
+            # 比赛状态，有多种，详见 _compute_compete_time 函数
             status = match['status']
 
+            # 比赛进行时间，原始数据需要进行一些转换
+            match_min = match['min']
             compete_time = cls._compute_compete_time(status, match_min)
 
+            # 比分，角球
             home_corner_kick = cls._compute_kick_or_score(status, match['hoCo'])
             visitor_corner_kick = cls._compute_kick_or_score(status, match['guCo'])
             home_score = cls._compute_kick_or_score(status, match['hoScore'])
@@ -116,21 +98,14 @@ class FootballMatchSpider(spider.MultiThreadSpider):
             home_half_score = cls._compute_kick_or_score(status, match['hoHalfScore'])
             visitor_half_score = cls._compute_kick_or_score(status, match['guHalfScore'])
 
-            handicap = cls._compute_handicap(odds['let'].replace('-', '*'))
+            # 红黄牌
+            home_yellow_card = match['hoYellow']
+            visitor_yellow_card = match['guYellow']
+            home_red_card = match['hoRed']
+            visitor_red_card = match['guRed']
 
-            yield {
-                'id': f'{date_format}{ser_num}',  # 与 betfair 中的 id 完全对应
-
-                'remote_id': match['id'],
-
-                'start_time': match['time'],
-                'league': match['leagueSimpName'],
-                'home_name': match['hoTeamSimpName'],
-                'visitor_name': match['guTeamSimpName'],
-                # 字符串中可能还带联赛名，只提取排名
-                'home_rank': cls.RE_FIND_NUM.findall(host_rank)[0] if host_rank else None,
-                'visitor_rank': cls.RE_FIND_NUM.findall(guest_rank)[0] if guest_rank else None,
-
+            # 原地
+            item.update({
                 'compete_time': compete_time,
 
                 'home_corner_kick': home_corner_kick,
@@ -142,21 +117,13 @@ class FootballMatchSpider(spider.MultiThreadSpider):
                 'home_half_score': home_half_score,
                 'visitor_half_score': visitor_half_score,
 
-                'home_yellow_card': match['hoYellow'],
-                'visitor_yellow_card': match['guYellow'],
-                'home_red_card': match['hoRed'],
-                'visitor_red_card': match['guRed'],
+                'home_yellow_card': home_yellow_card,
+                'visitor_yellow_card': visitor_yellow_card,
+                'home_red_card': home_red_card,
+                'visitor_red_card': visitor_red_card,
+            })
 
-                'handicap': handicap,
-                'home_handicap_odds': odds['letHm'],
-                'visitor_handicap_odds': odds['letAw'],
-                'handicap_total': odds['size'],
-                'home_handicap_total_odds': odds['sizeBig'],
-                'visitor_handicap_total_odds': odds['sizeSma'],
-                'win_odds': odds['avgHm'],
-                'draw_odds': odds['avgEq'],
-                'lose_odds': odds['avgAw'],
-            }
+            yield item
 
     @staticmethod
     def _compute_compete_time(status: int, match_min: int) -> str:
@@ -193,16 +160,6 @@ class FootballMatchSpider(spider.MultiThreadSpider):
             return None
 
         return data
-
-    @staticmethod
-    def _compute_handicap(handicap: str) -> str:
-        """去除小数字符串结尾的 0"""
-
-        if handicap.endswith('.00'):
-            handicap = handicap[:-3]
-        elif handicap.endswith('0'):
-            handicap = handicap[:-1]
-        return handicap
 
 
 def main() -> None:
