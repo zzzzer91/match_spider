@@ -117,6 +117,7 @@ class BasketballMatchScheduleSpider(spider.MultiThreadSpider):
                         handicap = '-' + handicap2
                     else:
                         handicap = None
+                handicap = cls._compute_handicap(handicap)
 
                 # 亚盘赔率
                 xpath_str = './tbody/tr[{}]/td[@tag="{}RfOdds"]/span[1]/a/text()'
@@ -155,6 +156,16 @@ class BasketballMatchScheduleSpider(spider.MultiThreadSpider):
                     'home_handicap_total_odds': home_handicap_total_odds,
                     'visitor_handicap_total_odds': visitor_handicap_total_odds,
                 }
+
+    @staticmethod
+    def _compute_handicap(handicap: str) -> str:
+        """去除小数字符串结尾的 0"""
+
+        if handicap.endswith('.00'):
+            handicap = handicap[:-3]
+        elif handicap.endswith('0'):
+            handicap = handicap[:-1]
+        return handicap
 
 
 def main() -> None:

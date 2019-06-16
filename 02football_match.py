@@ -109,6 +109,15 @@ class FootballMatchSpider(spider.MultiThreadSpider):
 
             compete_time = cls._compute_compete_time(status, match_min)
 
+            home_corner_kick = cls._compute_kick_or_score(status, match['hoCo'])
+            visitor_corner_kick = cls._compute_kick_or_score(status, match['guCo'])
+            home_score = cls._compute_kick_or_score(status, match['hoScore'])
+            visitor_score = cls._compute_kick_or_score(status, match['guScore'])
+            home_half_score = cls._compute_kick_or_score(status, match['hoHalfScore'])
+            visitor_half_score = cls._compute_kick_or_score(status, match['guHalfScore'])
+
+            handicap = cls._compute_handicap(odds['let'].replace('-', '*'))
+
             yield {
                 'id': f'{date_format}{ser_num}',  # 与 betfair 中的 id 完全对应
 
@@ -124,28 +133,28 @@ class FootballMatchSpider(spider.MultiThreadSpider):
 
                 'compete_time': compete_time,
 
-                'home_corner_kick': match['hoCo'],
-                'visitor_corner_kick': match['guCo'],
+                'home_corner_kick': home_corner_kick,
+                'visitor_corner_kick': visitor_corner_kick,
 
-                'home_score': match['hoScore'],
-                'visitor_score': match['guScore'],
+                'home_score': home_score,
+                'visitor_score': visitor_score,
 
-                'home_half_score': match['hoHalfScore'],
-                'visitor_half_score': match['guHalfScore'],
+                'home_half_score': home_half_score,
+                'visitor_half_score': visitor_half_score,
 
                 'home_yellow_card': match['hoYellow'],
                 'visitor_yellow_card': match['guYellow'],
                 'home_red_card': match['hoRed'],
                 'visitor_red_card': match['guRed'],
 
-                'handicap': odds['let'].replace('-', '*'),
+                'handicap': handicap,
                 'home_handicap_odds': odds['letHm'],
                 'visitor_handicap_odds': odds['letAw'],
                 'handicap_total': odds['size'],
                 'home_handicap_total_odds': odds['sizeBig'],
                 'visitor_handicap_total_odds': odds['sizeSma'],
-                'win_odds': odds['avgEq'],
-                'draw_odds': odds['avgHm'],
+                'win_odds': odds['avgHm'],
+                'draw_odds': odds['avgEq'],
                 'lose_odds': odds['avgAw'],
             }
 
@@ -175,6 +184,25 @@ class FootballMatchSpider(spider.MultiThreadSpider):
             compete_time = '未'
 
         return compete_time
+
+    @staticmethod
+    def _compute_kick_or_score(status: int, data: int) -> Optional[int]:
+        """如果比赛还没开始那么返回 None，而不是 0"""
+
+        if data == 0 and status not in (1, 2, 3, 4, 5, -1):
+            return None
+
+        return data
+
+    @staticmethod
+    def _compute_handicap(handicap: str) -> str:
+        """去除小数字符串结尾的 0"""
+
+        if handicap.endswith('.00'):
+            handicap = handicap[:-3]
+        elif handicap.endswith('0'):
+            handicap = handicap[:-1]
+        return handicap
 
 
 def main() -> None:

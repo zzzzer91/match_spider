@@ -77,6 +77,8 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
             guest_rank = match['guRank']
             odds = match['odds']
 
+            handicap = cls._compute_handicap(odds['let'].replace('-', '*'))
+
             yield {
                 'id': f'{date_format}{ser_num}',  # 与 betfair 中的 id 完全对应
                 'remote_id': match['id'],
@@ -87,16 +89,26 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
                 # 字符串中可能还带联赛名，只提取排名
                 'home_rank': cls.RE_FIND_NUM.findall(host_rank)[0] if host_rank else None,
                 'visitor_rank': cls.RE_FIND_NUM.findall(guest_rank)[0] if guest_rank else None,
-                'handicap': odds['let'].replace('-', '*'),
+                'handicap': handicap,
                 'home_handicap_odds': odds['letHm'],
                 'visitor_handicap_odds': odds['letAw'],
                 'handicap_total': odds['size'],
                 'home_handicap_total_odds': odds['sizeBig'],
                 'visitor_handicap_total_odds': odds['sizeSma'],
-                'win_odds': odds['avgEq'],
-                'draw_odds': odds['avgHm'],
+                'win_odds': odds['avgHm'],
+                'draw_odds': odds['avgEq'],
                 'lose_odds': odds['avgAw'],
             }
+
+    @staticmethod
+    def _compute_handicap(handicap: str) -> str:
+        """去除小数字符串结尾的 0"""
+
+        if handicap.endswith('.00'):
+            handicap = handicap[:-3]
+        elif handicap.endswith('0'):
+            handicap = handicap[:-1]
+        return handicap
 
 
 def main() -> None:
