@@ -1,10 +1,9 @@
 """配置文件"""
 
-from crash import log
+from crash.log import DEBUG, INFO, WARNING, ERROR
 
 # 日志级别
-LOG_LEVEL = log.DEBUG
-del log
+LOG_LEVEL = DEBUG
 
 # 使用线程数量
 THREAD_NUM = 1
