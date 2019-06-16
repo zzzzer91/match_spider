@@ -51,6 +51,8 @@ class FootballMatchSpider(FootballMatchScheduleSpider):
         'lose_odds',
     }
 
+    MATCH_NOT_START_FLAG = frozenset({'取消', '待定', '腰斩', '中断', '推迟', '未'})
+
     def __init__(self,
                  name: str,
                  mysql_config: MysqlConfig,
@@ -91,12 +93,12 @@ class FootballMatchSpider(FootballMatchScheduleSpider):
             compete_time = cls._compute_compete_time(status, match_min)
 
             # 比分，角球
-            home_corner_kick = cls._compute_kick_or_score(status, match['hoCo'])
-            visitor_corner_kick = cls._compute_kick_or_score(status, match['guCo'])
-            home_score = cls._compute_kick_or_score(status, match['hoScore'])
-            visitor_score = cls._compute_kick_or_score(status, match['guScore'])
-            home_half_score = cls._compute_kick_or_score(status, match['hoHalfScore'])
-            visitor_half_score = cls._compute_kick_or_score(status, match['guHalfScore'])
+            home_corner_kick = cls._compute_kick_or_score(compete_time, match['hoCo'])
+            visitor_corner_kick = cls._compute_kick_or_score(compete_time, match['guCo'])
+            home_score = cls._compute_kick_or_score(compete_time, match['hoScore'])
+            visitor_score = cls._compute_kick_or_score(compete_time, match['guScore'])
+            home_half_score = cls._compute_kick_or_score(compete_time, match['hoHalfScore'])
+            visitor_half_score = cls._compute_kick_or_score(compete_time, match['guHalfScore'])
 
             # 红黄牌
             home_yellow_card = match['hoYellow']
@@ -152,11 +154,11 @@ class FootballMatchSpider(FootballMatchScheduleSpider):
 
         return compete_time
 
-    @staticmethod
-    def _compute_kick_or_score(status: int, data: int) -> Optional[int]:
+    @classmethod
+    def _compute_kick_or_score(cls, compete_time: str, data: int) -> Optional[int]:
         """如果比赛还没开始那么返回 None，而不是 0"""
 
-        if data == 0 and status not in (1, 2, 3, 4, 5, -1):
+        if data == 0 and compete_time in cls.MATCH_NOT_START_FLAG:
             return None
 
         return data
