@@ -51,6 +51,7 @@ class BasketballMatchScheduleSpider(spider.MultiThreadSpider):
                  name: str,
                  mysql_config: MysqlConfig,
                  table_save:  str) -> None:
+
         super().__init__(name, mysql_config, table_save)
 
     def run(self) -> None:
@@ -75,11 +76,53 @@ class BasketballMatchScheduleSpider(spider.MultiThreadSpider):
         dt = datetime.datetime.strptime(date_format, '%Y-%m-%d')
         date_format = dt.strftime('%Y%m%d')
 
+        for item in cls._parse(table_all_element, date_format):
+
+            yield {
+                'remote_id': item['remote_id'],
+                'id': item['id'],
+                'league': item['league'],
+                'start_time': item['start_time'],
+                'home_name': item['home_name'],
+                'visitor_name': item['visitor_name'],
+                'home_rank': item['home_rank'],
+                'visitor_rank': item['visitor_rank'],
+                'win_odds': item['win_odds'],
+                'lose_odds': item['lose_odds'],
+                'handicap': item['handicap'],
+                'home_handicap_odds': item['home_handicap_odds'],
+                'visitor_handicap_odds': item['visitor_handicap_odds'],
+                'handicap_total': item['handicap_total'],
+                'home_handicap_total_odds': item['home_handicap_total_odds'],
+                'visitor_handicap_total_odds': item['visitor_handicap_total_odds'],
+            }
+
+    @staticmethod
+    def _compute_handicap(handicap: str) -> Optional[str]:
+        """去除小数字符串结尾的 0"""
+
+        if handicap is None:
+            return None
+
+        if handicap.endswith('.00'):
+            handicap = handicap[:-3]
+        elif handicap.endswith('0'):
+            handicap = handicap[:-1]
+        return handicap
+
+    @classmethod
+    def _parse(cls, selector, date_format: str) -> Iterator[Dict]:
+
         i = 0
-        for table in table_all_element:
+        for table in selector:
             # 联赛名
-            league = table.xpath('./thead/tr/th[1]/a/text()')
-            league = league[0].strip() if league else None
+            xpath_str = './thead/tr/th[1]/a/text()'
+            league = table.xpath(xpath_str)
+            if league:
+                league = league[0].strip()
+            else:
+                xpath_str = './thead/tr/th[1]/text()'
+                league = table.xpath(xpath_str)[0].strip()
 
             if league in cls.LEAGUE_FILTER:
                 i += 1
@@ -91,9 +134,18 @@ class BasketballMatchScheduleSpider(spider.MultiThreadSpider):
                 time_str_list = table.xpath('./tbody/tr[1]/td[1]/text()')
                 start_time = ' '.join(s.strip() for s in time_str_list if s.strip())
 
+                # 即时比赛时间
+                compete_time = table.xpath('./thead/tr/th[2]/text()')[0].strip()
+
                 # 主队名，客队名
                 xpath_str = './tbody/tr[{}]/td[{}]/a/text()'
-                home_name = table.xpath(xpath_str.format(1, 2))[0].strip()
+                home_name = table.xpath(xpath_str.format(1, 2))
+                if home_name:
+                    home_name = home_name[0].strip()
+                else:
+                    xpath_str = './tbody/tr[{}]/td[{}]/text()'
+                    home_name = table.xpath(xpath_str.format(1, 2))[0].strip()
+
                 visitor_name = table.xpath(xpath_str.format(2, 1))[0].strip()
 
                 # 主客队排名
@@ -138,6 +190,41 @@ class BasketballMatchScheduleSpider(spider.MultiThreadSpider):
                 visitor_handicap_total_odds = table.xpath(xpath_str.format(2, 'g'))[0].strip()
                 visitor_handicap_total_odds = visitor_handicap_total_odds if visitor_handicap_total_odds else None
 
+                # 第一节主客队比分
+                xpath_str = './tbody/tr[{}]/td[@tag="{}Score1"]/text()'
+                home_quarter_one = table.xpath(xpath_str.format(1, 'h'))[0].strip()
+                visitor_quarter_one = table.xpath(xpath_str.format(2, 'g'))[0].strip()
+                home_quarter_one = None if home_quarter_one == '-' else home_quarter_one
+                visitor_quarter_one = None if visitor_quarter_one == '-' else visitor_quarter_one
+
+                # 第二节主客队比分
+                xpath_str = './tbody/tr[{}]/td[@tag="{}Score2"]/text()'
+                home_quarter_two = table.xpath(xpath_str.format(1, 'h'))[0].strip()
+                visitor_quarter_two = table.xpath(xpath_str.format(2, 'g'))[0].strip()
+                home_quarter_two = None if home_quarter_two == '-' else home_quarter_two
+                visitor_quarter_two = None if visitor_quarter_two == '-' else visitor_quarter_two
+
+                # 第三节主客队比分
+                xpath_str = './tbody/tr[{}]/td[@tag="{}Score3"]/text()'
+                home_quarter_three = table.xpath(xpath_str.format(1, 'h'))[0].strip()
+                visitor_quarter_three = table.xpath(xpath_str.format(2, 'g'))[0].strip()
+                home_quarter_three = None if home_quarter_three == '-' else home_quarter_three
+                visitor_quarter_three = None if visitor_quarter_three == '-' else visitor_quarter_three
+
+                # 第四节主客队比分
+                xpath_str = './tbody/tr[{}]/td[@tag="{}Score4"]/text()'
+                home_quarter_four = table.xpath(xpath_str.format(1, 'h'))[0].strip()
+                visitor_quarter_four = table.xpath(xpath_str.format(2, 'g'))[0].strip()
+                home_quarter_four = None if home_quarter_four == '-' else home_quarter_four
+                visitor_quarter_four = None if visitor_quarter_four == '-' else visitor_quarter_four
+
+                # 主客队总比分
+                xpath_str = './tbody/tr[{}]/td[@tag="{}TotalScore"]/text()'
+                home_total_score = table.xpath(xpath_str.format(1, 'h'))[0].strip()
+                visitor_total_score = table.xpath(xpath_str.format(2, 'g'))[0].strip()
+                home_total_score = None if home_total_score == '-' else home_total_score
+                visitor_total_score = None if visitor_total_score == '-' else visitor_total_score
+
                 yield {
                     'remote_id': remote_id,
                     'id': f'{date_format}{i:0>3d}',  # 左填充 0
@@ -155,17 +242,19 @@ class BasketballMatchScheduleSpider(spider.MultiThreadSpider):
                     'handicap_total': handicap_total,
                     'home_handicap_total_odds': home_handicap_total_odds,
                     'visitor_handicap_total_odds': visitor_handicap_total_odds,
+
+                    'compete_time': compete_time,
+                    'home_quarter_one': home_quarter_one,
+                    'visitor_quarter_one': visitor_quarter_one,
+                    'home_quarter_two': home_quarter_two,
+                    'visitor_quarter_two': visitor_quarter_two,
+                    'home_quarter_three': home_quarter_three,
+                    'visitor_quarter_three': visitor_quarter_three,
+                    'home_quarter_four': home_quarter_four,
+                    'visitor_quarter_four': visitor_quarter_four,
+                    'home_total_score': home_total_score,
+                    'visitor_total_score': visitor_total_score,
                 }
-
-    @staticmethod
-    def _compute_handicap(handicap: str) -> str:
-        """去除小数字符串结尾的 0"""
-
-        if handicap.endswith('.00'):
-            handicap = handicap[:-3]
-        elif handicap.endswith('0'):
-            handicap = handicap[:-1]
-        return handicap
 
 
 def main() -> None:
