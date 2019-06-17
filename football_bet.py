@@ -9,7 +9,7 @@ import datetime
 
 from crash import spider, log
 from crash.types import *
-from football_match import FootballMatchSpider
+from football_match_schedule import FootballMatchScheduleSpider
 
 from config import *
 
@@ -20,15 +20,23 @@ warnings.filterwarnings('error')
 log.logger.set_log_level(LOG_LEVEL)
 
 
-class FootballBetSpider(FootballMatchSpider):
+class FootballBetSpider(FootballMatchScheduleSpider):
 
     # sql 插入已存在主键纪录时，更新如下字段
     # 比赛开始后，赔率相关不更新
     AFTER_MATCH_START_UPDATE_FIELD = {
         'compete_time',
-        'home_half_score',
-        'visitor_half_score',
+
+        'home_score',
+        'visitor_score',
     }
+
+    UPDATE_FIELD = {
+        *FootballMatchScheduleSpider.UPDATE_FIELD,
+        *AFTER_MATCH_START_UPDATE_FIELD
+    }
+
+    MATCH_NOT_START_FLAG = frozenset({'取消', '待定', '腰斩', '中断', '推迟', '未'})
 
     def __init__(self,
                  name: str,
@@ -55,16 +63,11 @@ class FootballBetSpider(FootballMatchSpider):
         jd = r.json()
 
         for item in self.parse(jd, date.strftime('%Y%m%d')):
+
+            # 不用这些字段
             item.pop('home_rank')
             item.pop('visitor_rank')
-            item.pop('home_corner_kick')
-            item.pop('visitor_corner_kick')
-            item.pop('home_half_score')
-            item.pop('visitor_half_score')
-            item.pop('home_yellow_card')
-            item.pop('visitor_yellow_card')
-            item.pop('home_red_card')
-            item.pop('visitor_red_card')
+
             log.logger.debug(item)
             if item['compete_time'] in self.MATCH_NOT_START_FLAG:
                 update_field = self.UPDATE_FIELD
@@ -72,6 +75,70 @@ class FootballBetSpider(FootballMatchSpider):
                 update_field = self.AFTER_MATCH_START_UPDATE_FIELD
 
             self.insert_or_update(item, update_field)
+
+    @classmethod
+    def parse(cls, jd: Dict, date_format: str) -> Iterator[Dict]:
+
+        matches = jd['matches']
+
+        for item, match in zip(super().parse(jd, date_format), matches):
+
+            # 比赛状态，有多种，详见 _compute_compete_time 函数
+            status = match['status']
+
+            # 比赛进行时间，原始数据需要进行一些转换
+            match_min = match['min']
+            compete_time = cls._compute_compete_time(status, match_min)
+
+            # 总比分
+            home_score = cls._compute_kick_or_score(compete_time, match['hoScore'])
+            visitor_score = cls._compute_kick_or_score(compete_time, match['guScore'])
+
+            # 原地
+            item.update({
+                'compete_time': compete_time,
+
+                'home_score': home_score,
+                'visitor_score': visitor_score
+            })
+
+            yield item
+
+    @staticmethod
+    def _compute_compete_time(status: int, match_min: int) -> str:
+        """目标网站生成比赛状态的前端代码 Python 版"""
+
+        if status == 1:  # 上半场
+            compete_time = '45+' if match_min > 45 else f'{match_min}'
+        elif status == 3 or status == 4 or status == 5:  # 下半场、加时、点球
+            compete_time = '90+' if match_min > 90 else f'{match_min}'
+        elif status == 2:  # 中场
+            compete_time = '中'
+        elif status == -1:  # 完场
+            compete_time = '完'
+        elif status == -10:
+            compete_time = '取消'
+        elif status == -11:
+            compete_time = '待定'
+        elif status == -12:
+            compete_time = '腰斩'
+        elif status == -13:
+            compete_time = '中断'
+        elif status == -14:
+            compete_time = '推迟'
+        else:
+            compete_time = '未'
+
+        return compete_time
+
+    @classmethod
+    def _compute_kick_or_score(cls, compete_time: str, data: int) -> Optional[int]:
+        """如果比赛还没开始那么返回 None，而不是 0"""
+
+        if data == 0 and compete_time in cls.MATCH_NOT_START_FLAG:
+            return None
+
+        return data
 
 
 def main() -> None:

@@ -22,7 +22,8 @@ class MultiThreadSpider(threading.Thread):
         'Accept': 'text/html,application/xhtml+xml,application/xml;'
                   'q=0.9,image/webp,image/apng,*/*;q=0.8',
         'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7'
+        'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Connection': 'keep-alive'
     }
 
     # 如果请求 json，用这个头部
@@ -32,7 +33,8 @@ class MultiThreadSpider(threading.Thread):
         'Accept-Encoding': 'gzip, deflate, br',
         'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
         'Content-Type': 'application/json; charset=UTF-8',
-        'x-requested-with': 'XMLHttpRequest'  # 代表是 ajax 请求
+        'x-requested-with': 'XMLHttpRequest',  # 代表是 ajax 请求
+        'Connection': 'keep-alive'
     }
 
     # 任务队列，分发任务

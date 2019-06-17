@@ -24,6 +24,8 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
 
     url_temp = 'https://live.13322.com/lotteryScore/list?getExtra=1&lang=zh&date={}'
 
+    url_current_odds_url = 'https://live.13322.com/common/ajaxOddsInfoByMatchId'
+
     # sql 插入已存在主键纪录时，更新如下字段
     UPDATE_FIELD = {
         'handicap',
@@ -66,6 +68,10 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
         jd = r.json()
 
         for item in self.parse(jd, date.strftime('%Y%m%d')):
+
+            temp = self.get_current_odds(item['remote_id'])
+            item.update(temp)
+
             log.logger.debug(item)
             self.insert_or_update(item, self.UPDATE_FIELD)
 
@@ -80,9 +86,21 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
             host_rank = match['hoRank']
             guest_rank = match['guRank']
 
-            odds = match['odds']
+            first_odds = match['firstodds']
 
-            handicap = cls._compute_handicap(odds['let'].replace('-', '*'))
+            # 为空的数据不如库
+            if first_odds is None:
+                continue
+
+            handicap = cls._compute_handicap(first_odds['let'].replace('-', '*'))
+            home_handicap_odds = first_odds['letHm']
+            visitor_handicap_odds = first_odds['letAw']
+            handicap_total = first_odds['size']
+            home_handicap_total_odds = first_odds['sizeBig']
+            visitor_handicap_total_odds = first_odds['sizeSma']
+            win_odds = first_odds['avgHm']
+            draw_odds = first_odds['avgEq']
+            lose_odds = first_odds['avgAw']
 
             yield {
                 'id': f'{date_format}{ser_num}',  # 与 betfair 中的 id 完全对应
@@ -96,28 +114,84 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
                 'visitor_rank': cls.RE_FIND_NUM.findall(guest_rank)[0] if guest_rank else None,
 
                 'handicap': handicap,
-                'home_handicap_odds': odds['letHm'],
-                'visitor_handicap_odds': odds['letAw'],
-                'handicap_total': odds['size'],
-                'home_handicap_total_odds': odds['sizeBig'],
-                'visitor_handicap_total_odds': odds['sizeSma'],
-                'win_odds': odds['avgHm'],
-                'draw_odds': odds['avgEq'],
-                'lose_odds': odds['avgAw'],
+                'home_handicap_odds': home_handicap_odds,
+                'visitor_handicap_odds': visitor_handicap_odds,
+                'handicap_total': handicap_total,
+                'home_handicap_total_odds': home_handicap_total_odds,
+                'visitor_handicap_total_odds': visitor_handicap_total_odds,
+                'win_odds': win_odds,
+                'draw_odds': draw_odds,
+                'lose_odds': lose_odds,
             }
+
+    def get_current_odds(self, remote_id: int) -> Dict:
+        """获取实时赔率"""
+
+        # 这里 post 时要换个请求头
+        temp = self.session.headers
+        self.session.headers = self.headers_html
+        r = self.session.post(self.url_current_odds_url, data={'matchId': remote_id})
+        self.session.headers = temp
+
+        jd = r.json()
+
+        log.logger.debug(jd)
+
+        current_odds = self._compute_current_odds(jd)
+
+        handicap = self._compute_handicap(current_odds['let'].replace('-', '*'))
+        home_handicap_odds = current_odds['letHm']
+        visitor_handicap_odds = current_odds['letAw']
+        handicap_total = current_odds['size']
+        home_handicap_total_odds = current_odds['sizeBig']
+        visitor_handicap_total_odds = current_odds['sizeSma']
+        win_odds = current_odds['avgHm']
+        draw_odds = current_odds['avgEq']
+        lose_odds = current_odds['avgAw']
+
+        return {
+            'handicap': handicap,
+            'home_handicap_odds': home_handicap_odds,
+            'visitor_handicap_odds': visitor_handicap_odds,
+            'handicap_total': handicap_total,
+            'home_handicap_total_odds': home_handicap_total_odds,
+            'visitor_handicap_total_odds': visitor_handicap_total_odds,
+            'win_odds': win_odds,
+            'draw_odds': draw_odds,
+            'lose_odds': lose_odds,
+        }
 
     @staticmethod
     def _compute_handicap(handicap: str) -> Optional[str]:
         """去除小数字符串结尾的 0"""
 
-        if handicap is None:
-            return None
-
         if handicap.endswith('.00'):
             handicap = handicap[:-3]
-        elif handicap.endswith('0'):
+        elif len(handicap) > 1 and handicap.endswith('0'):
             handicap = handicap[:-1]
         return handicap
+
+    @staticmethod
+    def _compute_current_odds(jd: List) -> Dict[str, str]:
+        """把返回的数据解析成合适的数据"""
+
+        temp = [s.split(',') for s in jd]
+
+        d = {}
+        for l in temp:
+            if l[-1] == '21':
+                d['let'] = l[3]
+                d['letHm'] = l[4]
+                d['letAw'] = l[5]
+            elif l[-1] == '11':
+                d['size'] = l[3]
+                d['sizeBig'] = l[4]
+                d['sizeSma'] = l[5]
+            elif l[-1] == '31':
+                d['avgEq'] = l[3]
+                d['avgHm'] = l[4]
+                d['avgAw'] = l[5]
+        return d
 
 
 def main() -> None:
