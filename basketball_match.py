@@ -7,11 +7,9 @@ modified:
 import warnings
 import datetime
 
-from lxml import etree
-
 from crash import spider, log
 from crash.types import *
-from basketball_match_schedule import BasketballMatchScheduleSpider
+from basketball_bet import BasketballBetSpider
 
 from config import *
 
@@ -22,32 +20,7 @@ warnings.filterwarnings('error')
 log.logger.set_log_level(LOG_LEVEL)
 
 
-class BasketballMatchSpider(BasketballMatchScheduleSpider):
-
-    url_temp = 'https://basket.13322.com/jsbf.html'
-
-    # sql 插入已存在主键纪录时，更新如下字段
-    UPDATE_FIELD = {
-        'handicap',
-        'home_handicap_odds',
-        'visitor_handicap_odds',
-        'handicap_total',
-        'home_handicap_total_odds',
-        'visitor_handicap_total_odds',
-        'win_odds',
-        'lose_odds',
-        'compete_time',
-        'home_quarter_one',
-        'visitor_quarter_one',
-        'home_quarter_two',
-        'visitor_quarter_two',
-        'home_quarter_three',
-        'visitor_quarter_three',
-        'home_quarter_four',
-        'visitor_quarter_four',
-        'home_total_score',
-        'visitor_total_score',
-    }
+class BasketballMatchSpider(BasketballBetSpider):
 
     def __init__(self,
                  name: str,
@@ -65,16 +38,6 @@ class BasketballMatchSpider(BasketballMatchScheduleSpider):
         for item in self.parse(r.text, today_format):
             log.logger.debug(item)
             self.insert_or_update(item, self.UPDATE_FIELD)
-
-    @classmethod
-    def parse(cls, html: str, date_format: str) -> Iterator[Dict]:
-
-        selector = etree.HTML(html)
-        table_all_element = selector.xpath('.//div[@class="table-all"]')[0]
-
-        for item in cls._parse(table_all_element, date_format):
-
-            yield item
 
 
 def main() -> None:

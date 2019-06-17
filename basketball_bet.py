@@ -7,9 +7,11 @@ modified:
 import warnings
 import datetime
 
+from lxml import etree
+
 from crash import spider, log
 from crash.types import *
-from basketball_match import BasketballMatchSpider
+from basketball_match_schedule import BasketballMatchScheduleSpider
 
 from config import *
 
@@ -20,7 +22,7 @@ warnings.filterwarnings('error')
 log.logger.set_log_level(LOG_LEVEL)
 
 
-class BasketballBetSpider(BasketballMatchSpider):
+class BasketballBetSpider(BasketballMatchScheduleSpider):
 
     url_temp = 'https://basket.13322.com/jsbf.html'
 
@@ -39,6 +41,12 @@ class BasketballBetSpider(BasketballMatchSpider):
         'visitor_total_score',
     }
 
+    # sql 插入已存在主键纪录时，更新如下字段
+    UPDATE_FIELD = {
+        *BasketballMatchScheduleSpider.UPDATE_FIELD,
+        *AFTER_MATCH_START_UPDATE_FIELD
+    }
+
     def __init__(self,
                  name: str,
                  mysql_config: MysqlConfig,
@@ -55,12 +63,24 @@ class BasketballBetSpider(BasketballMatchSpider):
         for item in self.parse(r.text, today_format):
             item.pop('home_rank')
             item.pop('visitor_rank')
-            log.logger.debug(item)
+
             if item['compete_time'] == '未赛':
                 update_field = self.UPDATE_FIELD
             else:
                 update_field = self.AFTER_MATCH_START_UPDATE_FIELD
+
+            log.logger.debug(item)
+
             self.insert_or_update(item, update_field)
+
+    @classmethod
+    def parse(cls, html: str, date_format: str) -> Iterator[Dict]:
+
+        selector = etree.HTML(html)
+        table_all_element = selector.xpath('.//div[@class="table-all"]')[0]
+
+        for item in cls._parse(table_all_element, date_format):
+            yield item
 
 
 def main() -> None:
