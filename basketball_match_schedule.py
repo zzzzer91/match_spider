@@ -101,12 +101,9 @@ class BasketballMatchScheduleSpider(spider.MultiThreadSpider):
     def _compute_handicap(handicap: str) -> Optional[str]:
         """去除小数字符串结尾的 0"""
 
-        if handicap is None:
-            return None
-
         if handicap.endswith('.00'):
             handicap = handicap[:-3]
-        elif handicap.endswith('0'):
+        elif len(handicap) > 1 and handicap.endswith('0'):
             handicap = handicap[:-1]
         return handicap
 
