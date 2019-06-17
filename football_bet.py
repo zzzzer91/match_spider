@@ -68,11 +68,14 @@ class FootballBetSpider(FootballMatchScheduleSpider):
             item.pop('home_rank')
             item.pop('visitor_rank')
 
-            log.logger.debug(item)
             if item['compete_time'] in self.MATCH_NOT_START_FLAG:
+                temp = self.get_current_odds(item['remote_id'])
+                item.update(temp)
                 update_field = self.UPDATE_FIELD
             else:
                 update_field = self.AFTER_MATCH_START_UPDATE_FIELD
+
+            log.logger.debug(item)
 
             self.insert_or_update(item, update_field)
 

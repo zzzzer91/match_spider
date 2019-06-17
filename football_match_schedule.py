@@ -135,7 +135,7 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
 
         jd = r.json()
 
-        log.logger.debug(jd)
+        # log.logger.debug(jd)
 
         current_odds = self._compute_current_odds(jd)
 
@@ -184,13 +184,13 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
                 d['letHm'] = l[4]
                 d['letAw'] = l[5]
             elif l[-1] == '11':
-                d['size'] = l[3]
-                d['sizeBig'] = l[4]
-                d['sizeSma'] = l[5]
-            elif l[-1] == '31':
                 d['avgEq'] = l[3]
                 d['avgHm'] = l[4]
                 d['avgAw'] = l[5]
+            elif l[-1] == '31':
+                d['size'] = l[3]
+                d['sizeBig'] = l[4]
+                d['sizeSma'] = l[5]
         return d
 
 
