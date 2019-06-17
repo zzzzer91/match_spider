@@ -36,7 +36,7 @@ class FootballBetSpider(FootballMatchScheduleSpider):
         *AFTER_MATCH_START_UPDATE_FIELD
     }
 
-    MATCH_NOT_START_FLAG = frozenset({'取消', '待定', '腰斩', '中断', '推迟', '未'})
+    MATCH_NOT_START_FLAG = {'取消', '待定', '腰斩', '中断', '推迟', '未'}
 
     def __init__(self,
                  name: str,
