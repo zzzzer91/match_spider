@@ -72,10 +72,7 @@ class FootballBetSpider(FootballMatchScheduleSpider):
             item.pop('home_rank')
             item.pop('visitor_rank')
 
-            # 原来 item 里的是初始赔率，这里用即时赔率
-            # 即时赔率要调用另一个接口
-            temp = self.get_current_odds(item['remote_id'])
-            item.update(temp)
+            item.update(self.get_current_odds(item['remote_id']))
 
             if item['compete_time'] in self.MATCH_NOT_START_FLAG:
                 update_field = self.UPDATE_FIELD
@@ -86,8 +83,7 @@ class FootballBetSpider(FootballMatchScheduleSpider):
 
             self.insert_or_update(MYSQL_TABLE_FOOTBALL_BET, item, update_field)
 
-    @classmethod
-    def parse(cls, jd: Dict, date_format: str) -> Iterator[Dict]:
+    def parse(self, jd: Dict, date_format: str) -> Iterator[Dict]:
 
         matches = jd['matches']
 
@@ -98,16 +94,15 @@ class FootballBetSpider(FootballMatchScheduleSpider):
 
             # 比赛进行时间，原始数据需要进行一些转换
             match_min = match['min']
-            compete_time = cls._compute_compete_time(status, match_min)
+            compete_time = self._compute_compete_time(status, match_min)
 
             # 总比分
-            home_score = cls._compute_kick_or_score(compete_time, match['hoScore'])
-            visitor_score = cls._compute_kick_or_score(compete_time, match['guScore'])
+            home_score = self._compute_kick_or_score(compete_time, match['hoScore'])
+            visitor_score = self._compute_kick_or_score(compete_time, match['guScore'])
 
             # 原地
             item.update({
                 'compete_time': compete_time,
-
                 'home_score': home_score,
                 'visitor_score': visitor_score
             })

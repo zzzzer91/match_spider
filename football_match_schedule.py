@@ -67,9 +67,8 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
         jd = r.json()
 
         for item in self.parse(jd, date.strftime('%Y%m%d')):
-            # 比赛安排，只用即时赔率，覆盖初始赔率
-            temp = self.get_current_odds(item['remote_id'])
-            item.update(temp)
+            # 比赛安排用即时赔率
+            item.update(self.get_current_odds(item['remote_id']))
 
             log.logger.debug(item)
 
@@ -79,32 +78,15 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
                 self.UPDATE_FIELD
             )
 
-    @classmethod
-    def parse(cls, jd: Dict, date_format: str) -> Iterator[Dict]:
+    def parse(self, jd: Dict, date_format: str) -> Iterator[Dict]:
 
         matches = jd['matches']
 
         for match in matches:
             # 提取比赛序号
-            ser_num = cls.RE_FIND_NUM.findall(match['serNum'])[0]
+            ser_num = self.RE_FIND_NUM.findall(match['serNum'])[0]
             host_rank = match['hoRank']
             guest_rank = match['guRank']
-
-            first_odds = match['firstodds']
-
-            # 为空的数据不如库
-            if first_odds is None:
-                continue
-
-            handicap = cls._compute_handicap(first_odds['let'].replace('-', '*'))
-            home_handicap_odds = first_odds['letHm']
-            visitor_handicap_odds = first_odds['letAw']
-            handicap_total = first_odds['size']
-            home_handicap_total_odds = first_odds['sizeBig']
-            visitor_handicap_total_odds = first_odds['sizeSma']
-            win_odds = first_odds['avgHm']
-            draw_odds = first_odds['avgEq']
-            lose_odds = first_odds['avgAw']
 
             yield {
                 'id': f'{date_format}{ser_num}',  # 与 betfair 中的 id 完全对应
@@ -114,18 +96,8 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
                 'home_name': match['hoTeamSimpName'],
                 'visitor_name': match['guTeamSimpName'],
                 # 字符串中可能还带联赛名，只提取排名
-                'home_rank': cls.RE_FIND_NUM.findall(host_rank)[0] if host_rank else None,
-                'visitor_rank': cls.RE_FIND_NUM.findall(guest_rank)[0] if guest_rank else None,
-
-                'handicap': handicap,
-                'home_handicap_odds': home_handicap_odds,
-                'visitor_handicap_odds': visitor_handicap_odds,
-                'handicap_total': handicap_total,
-                'home_handicap_total_odds': home_handicap_total_odds,
-                'visitor_handicap_total_odds': visitor_handicap_total_odds,
-                'win_odds': win_odds,
-                'draw_odds': draw_odds,
-                'lose_odds': lose_odds,
+                'home_rank': self.RE_FIND_NUM.findall(host_rank)[0] if host_rank else None,
+                'visitor_rank': self.RE_FIND_NUM.findall(guest_rank)[0] if guest_rank else None,
             }
 
     def get_current_odds(self, remote_id: int) -> Dict:
@@ -144,7 +116,7 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
         current_odds = self._compute_current_odds(jd)
 
         # 这里的都是初始赔率
-        handicap = self._compute_handicap(current_odds['let'].replace('-', '*'))
+        handicap = self._compute_handicap(current_odds['let'])
         home_handicap_odds = current_odds['letHm']
         visitor_handicap_odds = current_odds['letAw']
         handicap_total = current_odds['size']
@@ -169,6 +141,8 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
     @staticmethod
     def _compute_handicap(handicap: str) -> Optional[str]:
         """去除小数字符串结尾的 0"""
+
+        handicap = handicap.replace('-', '*')
 
         if handicap.endswith('.00'):
             handicap = handicap[:-3]

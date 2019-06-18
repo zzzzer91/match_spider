@@ -51,11 +51,15 @@ class FootballMatchSpider(FootballBetSpider):
         jd = r.json()
 
         for item in self.parse(jd, date.strftime('%Y%m%d')):
-            # 如果比赛还未开始，就用即时赔率，
-            # 一旦比赛开始，则用初始赔率
-            if item['compete_time'] in self.MATCH_NOT_START_FLAG:
-                temp = self.get_current_odds(item['remote_id'])
-                item.update(temp)
+
+            odds = item.pop('odds')
+
+            # 如果比赛还未开始或已经结束，就用即时赔率
+            if item['compete_time'] in self.MATCH_NOT_START_FLAG\
+                    or item['compete_time'] == '完':
+                item.update(self.get_current_odds(item['remote_id']))
+            else:  # 一旦比赛开始，则用滚球赔率
+                item.update(self.get_roll_odds(odds))
 
             log.logger.debug(item)
 
@@ -65,8 +69,7 @@ class FootballMatchSpider(FootballBetSpider):
                 self.UPDATE_FIELD
             )
 
-    @classmethod
-    def parse(cls, jd: Dict, date_format: str) -> Iterator[Dict]:
+    def parse(self, jd: Dict, date_format: str) -> Iterator[Dict]:
 
         matches = jd['matches']
 
@@ -75,16 +78,19 @@ class FootballMatchSpider(FootballBetSpider):
             compete_time = item['compete_time']
 
             # 比分，角球
-            home_corner_kick = cls._compute_kick_or_score(compete_time, match['hoCo'])
-            visitor_corner_kick = cls._compute_kick_or_score(compete_time, match['guCo'])
-            home_half_score = cls._compute_kick_or_score(compete_time, match['hoHalfScore'])
-            visitor_half_score = cls._compute_kick_or_score(compete_time, match['guHalfScore'])
+            home_corner_kick = self._compute_kick_or_score(compete_time, match['hoCo'])
+            visitor_corner_kick = self._compute_kick_or_score(compete_time, match['guCo'])
+            home_half_score = self._compute_kick_or_score(compete_time, match['hoHalfScore'])
+            visitor_half_score = self._compute_kick_or_score(compete_time, match['guHalfScore'])
 
             # 红黄牌
             home_yellow_card = match['hoYellow']
             visitor_yellow_card = match['guYellow']
             home_red_card = match['hoRed']
             visitor_red_card = match['guRed']
+
+            # 滚球指数，交给调用者判断
+            odds = match['odds']
 
             # 原地
             item.update({
@@ -98,9 +104,36 @@ class FootballMatchSpider(FootballBetSpider):
                 'visitor_yellow_card': visitor_yellow_card,
                 'home_red_card': home_red_card,
                 'visitor_red_card': visitor_red_card,
+
+                'odds': odds,
             })
 
             yield item
+
+    def get_roll_odds(self, odds: Dict[str, str]) -> Dict[str, str]:
+        """获取滚球赔率"""
+
+        handicap = self._compute_handicap(odds['let'])
+        home_handicap_odds = odds['letHm']
+        visitor_handicap_odds = odds['letAw']
+        handicap_total = odds['size']
+        home_handicap_total_odds = odds['sizeBig']
+        visitor_handicap_total_odds = odds['sizeSma']
+        win_odds = odds['avgHm']
+        draw_odds = odds['avgEq']
+        lose_odds = odds['avgAw']
+
+        return {
+            'handicap': handicap,
+            'home_handicap_odds': home_handicap_odds,
+            'visitor_handicap_odds': visitor_handicap_odds,
+            'handicap_total': handicap_total,
+            'home_handicap_total_odds': home_handicap_total_odds,
+            'visitor_handicap_total_odds': visitor_handicap_total_odds,
+            'win_odds': win_odds,
+            'draw_odds': draw_odds,
+            'lose_odds': lose_odds
+        }
 
 
 def main() -> None:
