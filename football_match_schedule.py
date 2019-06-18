@@ -142,6 +142,7 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
 
         current_odds = self._compute_current_odds(jd)
 
+        # 这里的都是初始赔率
         handicap = self._compute_handicap(current_odds['let'].replace('-', '*'))
         home_handicap_odds = current_odds['letHm']
         visitor_handicap_odds = current_odds['letAw']

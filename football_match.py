@@ -51,12 +51,14 @@ class FootballMatchSpider(FootballBetSpider):
         jd = r.json()
 
         for item in self.parse(jd, date.strftime('%Y%m%d')):
-
+            # 如果比赛还未开始，就用即时赔率，
+            # 一旦比赛开始，则用初始赔率
             if item['compete_time'] in self.MATCH_NOT_START_FLAG:
                 temp = self.get_current_odds(item['remote_id'])
                 item.update(temp)
 
             log.logger.debug(item)
+
             self.insert_or_update(
                 MYSQL_TABLE_FOOTBALL_MATCH,
                 item,

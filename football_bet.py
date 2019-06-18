@@ -26,7 +26,6 @@ class FootballBetSpider(FootballMatchScheduleSpider):
     # 比赛开始后，赔率相关不更新
     AFTER_MATCH_START_UPDATE_FIELD = {
         'compete_time',
-
         'home_score',
         'visitor_score',
     }
@@ -69,14 +68,16 @@ class FootballBetSpider(FootballMatchScheduleSpider):
         jd = r.json()
 
         for item in self.parse(jd, date.strftime('%Y%m%d')):
-
             # 不用这些字段
             item.pop('home_rank')
             item.pop('visitor_rank')
 
+            # 原来 item 里的是初始赔率，这里用即时赔率
+            # 即时赔率要调用另一个接口
+            temp = self.get_current_odds(item['remote_id'])
+            item.update(temp)
+
             if item['compete_time'] in self.MATCH_NOT_START_FLAG:
-                temp = self.get_current_odds(item['remote_id'])
-                item.update(temp)
                 update_field = self.UPDATE_FIELD
             else:
                 update_field = self.AFTER_MATCH_START_UPDATE_FIELD
