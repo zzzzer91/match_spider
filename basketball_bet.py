@@ -49,10 +49,9 @@ class BasketballBetSpider(BasketballMatchScheduleSpider):
 
     def __init__(self,
                  name: str,
-                 mysql_config: MysqlConfig,
-                 table_save:  str) -> None:
+                 mysql_config: MysqlConfig) -> None:
 
-        super().__init__(name, mysql_config, table_save)
+        super().__init__(name, mysql_config)
 
     def run(self) -> None:
 
@@ -71,7 +70,11 @@ class BasketballBetSpider(BasketballMatchScheduleSpider):
 
             log.logger.debug(item)
 
-            self.insert_or_update(item, update_field)
+            self.insert_or_update(
+                MYSQL_TABLE_BASKETBALL_BET,
+                item,
+                update_field
+            )
 
     @classmethod
     def parse(cls, html: str, date_format: str) -> Iterator[Dict]:
@@ -88,8 +91,7 @@ def main() -> None:
     spider.run_spider(
         1,
         BasketballBetSpider,
-        MYSQL_CONFIG,
-        MYSQL_TABLE_BASKETBALL_BET
+        MYSQL_CONFIG
     )
 
 

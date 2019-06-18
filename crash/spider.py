@@ -43,7 +43,6 @@ class MultiThreadSpider(threading.Thread):
     def __init__(self,
                  name: str,
                  mysql_config: MysqlConfig,
-                 table_save: str,
                  daemon: bool = True) -> None:
         super().__init__(name=name, daemon=daemon)
 
@@ -59,61 +58,54 @@ class MultiThreadSpider(threading.Thread):
         self.session = sessions.Session()
         self.session.headers.update(self.headers_html)  # 默认 html 头部
 
-        self.table_save = table_save
-
-        self.sql_insert: Optional[str] = None
-        self.sql_update: Optional[str] = None
-        self.sql_insert_or_update: Optional[str] = None
-
     def run(self) -> None:
         """抽象方法，由子类继承创建。"""
 
         raise NotImplementedError
 
-    def insert(self, item: Dict) -> None:
-        if self.sql_insert is None:  # 只构建一次，提高性能
-            self.sql_insert = 'INSERT INTO {} ({}) VALUES ({})'.format(
-                self.table_save,
-                ', '.join(item),
-                ', '.join(f'%({k})s' for k in item)
-            )
+    def insert(self, table: str, item: Dict) -> None:
+        sql = 'INSERT INTO {} ({}) VALUES ({})'.format(
+            table,
+            ', '.join(item),
+            ', '.join(f'%({k})s' for k in item)
+        )
 
         try:
-            self.cursor.execute(self.sql_insert, item)
+            self.cursor.execute(sql, item)
         except pymysql.IntegrityError:
             log.logger.debug(f'存在重复字段！ {str(item)}')
         except pymysql.err.Warning:  # 过滤不合法 mysql 类型
             log.logger.error(f'字段类型不合法！ {str(item)}')
 
-    def update(self, where: str, item: Dict) -> None:
-        if self.sql_update is None:
-            self.sql_update = 'UPDATE {} SET {} WHERE {{}}'.format(
-                self.table_save,
-                ', '.join(f'{k} = %({k})s' for k in item)
-            )
+    def update(self, table: str, where: str, item: Dict) -> None:
+        sql = 'UPDATE {} SET {} WHERE {}'.format(
+            table,
+            ', '.join(f'{k} = %({k})s' for k in item),
+            where
+        )
 
         try:
-            self.cursor.execute(self.sql_update.format(where), item)
+            self.cursor.execute(sql, item)
         except pymysql.err.Warning:
             log.logger.error(f'字段类型不合法！ {str(item)}')
 
-    def insert_or_update(self, item: Dict, update_field: set) -> None:
+    def insert_or_update(self, table: str, item: Dict, update_field: set) -> None:
         """sql 插入已存在主键纪录时，更新指定字段
 
+        :param table: 表名
         :param item: 数据
         :param update_field: 需要更新的字段
         """
 
-        if self.sql_insert_or_update is None:  # 只构建一次，提高性能
-            self.sql_insert_or_update = 'INSERT INTO {} ({}) VALUES ({}) ON DUPLICATE KEY UPDATE {}'.format(
-                self.table_save,
-                ', '.join(item),
-                ', '.join(f'%({k})s' for k in item),
-                ', '.join(f'{k} = %({k})s' for k in item if k in update_field)
-            )
+        sql = 'INSERT INTO {} ({}) VALUES ({}) ON DUPLICATE KEY UPDATE {}'.format(
+            table,
+            ', '.join(item),
+            ', '.join(f'%({k})s' for k in item),
+            ', '.join(f'{k} = %({k})s' for k in item if k in update_field)
+        )
 
         try:
-            self.cursor.execute(self.sql_insert_or_update, item)
+            self.cursor.execute(sql, item)
         except pymysql.err.Warning:  # 过滤不合法 mysql 类型
             log.logger.error(f'字段类型不合法！ {str(item)}')
 
@@ -142,13 +134,12 @@ class MultiThreadSpider(threading.Thread):
 def run_spider(
         thread_num: int,
         spider_class: Type[MultiThreadSpider],
-        mysql_config: MysqlConfig,
-        table_save:  str) -> None:
+        mysql_config: MysqlConfig) -> None:
 
     thread_list: List[MultiThreadSpider] = []
     for i in range(thread_num):
         t = spider_class(
-            f'thread{i+1}', mysql_config, table_save
+            f'thread{i+1}', mysql_config
         )
         thread_list.append(t)
 

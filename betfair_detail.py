@@ -35,9 +35,8 @@ class BetfairDetailSpider(spider.MultiThreadSpider):
 
     def __init__(self,
                  name: str,
-                 mysql_config: MysqlConfig,
-                 table_save:  str) -> None:
-        super().__init__(name, mysql_config, table_save)
+                 mysql_config: MysqlConfig) -> None:
+        super().__init__(name, mysql_config)
 
         # 改成抓取 json 数据的头部
         self.session.headers.update(self.headers_json)
@@ -67,7 +66,7 @@ class BetfairDetailSpider(spider.MultiThreadSpider):
                 for item in self.parse(jd, year):
                     item['betfair_id'] = _id  # 外键
                     log.logger.debug(item)
-                    self.insert(item)
+                    self.insert(MYSQL_TABLE_BETFAIR_DETAIL, item)
             else:
                 log.logger.error(jd['msg'])
 
@@ -121,8 +120,7 @@ def main() -> None:
     spider.run_spider(
         1,
         BetfairDetailSpider,
-        MYSQL_CONFIG,
-        MYSQL_TABLE_BETFAIR_DETAIL
+        MYSQL_CONFIG
     )
 
 

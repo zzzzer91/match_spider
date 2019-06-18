@@ -49,10 +49,9 @@ class BasketballMatchScheduleSpider(spider.MultiThreadSpider):
 
     def __init__(self,
                  name: str,
-                 mysql_config: MysqlConfig,
-                 table_save:  str) -> None:
+                 mysql_config: MysqlConfig) -> None:
 
-        super().__init__(name, mysql_config, table_save)
+        super().__init__(name, mysql_config)
 
     def run(self) -> None:
 
@@ -61,7 +60,11 @@ class BasketballMatchScheduleSpider(spider.MultiThreadSpider):
 
         for item in self.parse(r.text):
             log.logger.debug(item)
-            self.insert_or_update(item, self.UPDATE_FIELD)
+            self.insert_or_update(
+                MYSQL_TABLE_BASKETBALL_MATCH_SCHEDULE,
+                item,
+                self.UPDATE_FIELD
+            )
 
     @classmethod
     def parse(cls, html: str) -> Iterator[Dict]:
@@ -259,8 +262,7 @@ def main() -> None:
     spider.run_spider(
         1,
         BasketballMatchScheduleSpider,
-        MYSQL_CONFIG,
-        MYSQL_TABLE_BASKETBALL_MATCH_SCHEDULE
+        MYSQL_CONFIG
     )
 
 

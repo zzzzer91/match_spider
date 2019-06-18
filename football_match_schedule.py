@@ -44,9 +44,8 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
 
     def __init__(self,
                  name: str,
-                 mysql_config: MysqlConfig,
-                 table_save:  str) -> None:
-        super().__init__(name, mysql_config, table_save)
+                 mysql_config: MysqlConfig) -> None:
+        super().__init__(name, mysql_config)
 
         # 改成抓取 json 数据的头部
         self.session.headers.update(self.headers_json)
@@ -73,7 +72,11 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
             item.update(temp)
 
             log.logger.debug(item)
-            self.insert_or_update(item, self.UPDATE_FIELD)
+            self.insert_or_update(
+                MYSQL_TABLE_FOOTBALL_MATCH_SCHEDULE,
+                item,
+                self.UPDATE_FIELD
+            )
 
     @classmethod
     def parse(cls, jd: Dict, date_format: str) -> Iterator[Dict]:
@@ -199,8 +202,7 @@ def main() -> None:
     spider.run_spider(
         1,
         FootballMatchScheduleSpider,
-        MYSQL_CONFIG,
-        MYSQL_TABLE_FOOTBALL_MATCH_SCHEDULE
+        MYSQL_CONFIG
     )
 
 

@@ -40,12 +40,15 @@ class FootballBetSpider(FootballMatchScheduleSpider):
 
     def __init__(self,
                  name: str,
-                 mysql_config: MysqlConfig,
-                 table_save:  str) -> None:
+                 mysql_config: MysqlConfig) -> None:
 
-        super().__init__(name, mysql_config, table_save)
+        super().__init__(name, mysql_config)
 
     def run(self) -> None:
+        # 即时比分抓取今天的
+        # 足球竞彩时间计算规则：
+        # 在 url 中请求今天日期，返回的是
+        # 今天中午 12 点（包括 12 点）后，到明天中午 12 点前的比赛
         today = datetime.datetime.today()
         current_hour = today.hour
         if current_hour < 12:
@@ -53,7 +56,10 @@ class FootballBetSpider(FootballMatchScheduleSpider):
 
         self.fetch(today)
 
-        if 12 <= current_hour < 13:
+        # 有的比赛会比过 12 点
+        # 因为过 12 点，就算昨天的了，所以会导致不正确更新
+        # 这里在 1 小时内，再把昨天的数据抓下
+        if 12 <= current_hour < 24:
             self.fetch(today - datetime.timedelta(1))
 
     def fetch(self, date: datetime.datetime) -> None:
@@ -77,7 +83,7 @@ class FootballBetSpider(FootballMatchScheduleSpider):
 
             log.logger.debug(item)
 
-            self.insert_or_update(item, update_field)
+            self.insert_or_update(MYSQL_TABLE_FOOTBALL_BET, item, update_field)
 
     @classmethod
     def parse(cls, jd: Dict, date_format: str) -> Iterator[Dict]:
@@ -149,8 +155,7 @@ def main() -> None:
     spider.run_spider(
         1,
         FootballBetSpider,
-        MYSQL_CONFIG,
-        MYSQL_TABLE_FOOTBALL_BET
+        MYSQL_CONFIG
     )
 
 

@@ -49,9 +49,8 @@ class BetfairSpider(spider.MultiThreadSpider):
 
     def __init__(self,
                  name: str,
-                 mysql_config: MysqlConfig,
-                 table_save:  str) -> None:
-        super().__init__(name, mysql_config, table_save)
+                 mysql_config: MysqlConfig) -> None:
+        super().__init__(name, mysql_config)
 
         # 改成抓取 json 数据的头部
         self.session.headers.update(self.headers_json)
@@ -71,7 +70,11 @@ class BetfairSpider(spider.MultiThreadSpider):
         if jd['status'] == 'success':
             for item in self.parse(jd['result']['bf_page'], date_format):
                 log.logger.debug(item)
-                self.insert_or_update(item, self.UPDATE_FIELD)
+                self.insert_or_update(
+                    MYSQL_TABLE_BETFAIR,
+                    item,
+                    self.UPDATE_FIELD
+                )
         else:  # 访问失败，如请求未来日期，日期不合法
             log.logger.error(jd['msg'])
 
@@ -178,8 +181,7 @@ def main() -> None:
     spider.run_spider(
         1,
         BetfairSpider,
-        MYSQL_CONFIG,
-        MYSQL_TABLE_BETFAIR
+        MYSQL_CONFIG
     )
 
 

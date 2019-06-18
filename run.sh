@@ -15,7 +15,6 @@ fi
 script_array=('football_match_schedule' 'football_match' 'football_bet' 'basketball_match_schedule' 'basketball_match' 'basketball_bet' 'betfair' 'betfair_detail')
 
 # script_array[@] 会获取所有数组成员
-for var in ${script_array[@]}
-do
+for var in ${script_array[@]}; do
    ${PYTHON_PATH}/python ${CODE_PATH}/${var}.py &>> ${LOG_PATH}/${var}.log
 done
