@@ -67,11 +67,11 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
         jd = r.json()
 
         for item in self.parse(jd, date.strftime('%Y%m%d')):
-
             temp = self.get_current_odds(item['remote_id'])
             item.update(temp)
 
             log.logger.debug(item)
+
             self.insert_or_update(
                 MYSQL_TABLE_FOOTBALL_MATCH_SCHEDULE,
                 item,

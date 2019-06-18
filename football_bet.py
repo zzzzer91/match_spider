@@ -58,8 +58,8 @@ class FootballBetSpider(FootballMatchScheduleSpider):
 
         # 有的比赛会比过 12 点
         # 因为过 12 点，就算昨天的了，所以会导致不正确更新
-        # 这里在 1 小时内，再把昨天的数据抓下
-        if 12 <= current_hour < 24:
+        # 这里在一段时间内，再把昨天的数据抓下
+        if 12 <= current_hour < 14:
             self.fetch(today - datetime.timedelta(1))
 
     def fetch(self, date: datetime.datetime) -> None:
