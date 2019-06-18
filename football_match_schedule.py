@@ -67,6 +67,7 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
         jd = r.json()
 
         for item in self.parse(jd, date.strftime('%Y%m%d')):
+            # 比赛安排，只用即时赔率，覆盖初始赔率
             temp = self.get_current_odds(item['remote_id'])
             item.update(temp)
 
