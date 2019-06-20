@@ -11,6 +11,7 @@ from crash import spider, log
 from crash.types import *
 from football_bet import FootballBetSpider
 
+from helper import clear_float_zero
 from config import *
 
 # 将警告提升为异常，若字段类型不合法，pymysql 只会发出警告
@@ -113,7 +114,7 @@ class FootballMatchSpider(FootballBetSpider):
     def get_roll_odds(self, odds: Dict[str, str]) -> Dict[str, str]:
         """获取滚球赔率"""
 
-        handicap = self._compute_handicap(odds['let'])
+        handicap = clear_float_zero(odds['let'].replace('-', '*'))
         home_handicap_odds = odds['letHm']
         visitor_handicap_odds = odds['letAw']
         handicap_total = odds['size']
