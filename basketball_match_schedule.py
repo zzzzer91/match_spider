@@ -135,9 +135,9 @@ class BasketballMatchScheduleSpider(spider.MultiThreadSpider):
                     home_name = home_name[0].strip()
                 else:
                     xpath_str = './tbody/tr[{}]/td[{}]/text()'
-                    home_name = table.xpath(xpath_str.format(1, 2))[0].strip()
+                    home_name = ''.join(table.xpath(xpath_str.format(1, 2))).strip()
 
-                visitor_name = table.xpath(xpath_str.format(2, 1))[0].strip()
+                visitor_name = ''.join(table.xpath(xpath_str.format(2, 1))).strip()
 
                 # 主客队排名
                 xpath_str = './tbody/tr[{}]/td/span[contains(@class," show_rank")]/text()'
@@ -159,8 +159,10 @@ class BasketballMatchScheduleSpider(spider.MultiThreadSpider):
                     if handicap2:
                         handicap = '-' + handicap2
                     else:
-                        handicap = None
+                        handicap = ''
                 handicap = clear_float_zero(handicap)
+                if not handicap:
+                    handicap = None
 
                 # 亚盘赔率
                 xpath_str = './tbody/tr[{}]/td[@tag="{}RfOdds"]/span[1]/a/text()'
