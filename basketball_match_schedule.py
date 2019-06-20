@@ -14,6 +14,7 @@ from lxml import etree
 from crash import spider, log
 from crash.types import *
 
+from helper import clear_float_zero
 from config import *
 
 # 将警告提升为异常，若字段类型不合法，pymysql 只会发出警告
@@ -100,16 +101,6 @@ class BasketballMatchScheduleSpider(spider.MultiThreadSpider):
                 'visitor_handicap_total_odds': item['visitor_handicap_total_odds'],
             }
 
-    @staticmethod
-    def _compute_handicap(handicap: str) -> Optional[str]:
-        """去除小数字符串结尾的 0"""
-
-        if handicap.endswith('.00'):
-            handicap = handicap[:-3]
-        elif len(handicap) > 1 and handicap.endswith('0'):
-            handicap = handicap[:-1]
-        return handicap
-
     @classmethod
     def _parse(cls, selector, date_format: str) -> Iterator[Dict]:
 
@@ -169,7 +160,7 @@ class BasketballMatchScheduleSpider(spider.MultiThreadSpider):
                         handicap = '-' + handicap2
                     else:
                         handicap = None
-                handicap = cls._compute_handicap(handicap)
+                handicap = clear_float_zero(handicap)
 
                 # 亚盘赔率
                 xpath_str = './tbody/tr[{}]/td[@tag="{}RfOdds"]/span[1]/a/text()'

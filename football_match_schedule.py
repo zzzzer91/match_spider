@@ -11,6 +11,7 @@ import datetime
 from crash import spider, log
 from crash.types import *
 
+from helper import clear_float_zero
 from config import *
 
 # 将警告提升为异常，若字段类型不合法，pymysql 只会发出警告
@@ -116,7 +117,7 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
         current_odds = self._compute_current_odds(jd)
 
         # 这里的都是初始赔率
-        handicap = self._compute_handicap(current_odds['let'])
+        handicap = clear_float_zero(current_odds['let'].replace('-', '*'))
         home_handicap_odds = current_odds['letHm']
         visitor_handicap_odds = current_odds['letAw']
         handicap_total = current_odds['size']
@@ -137,18 +138,6 @@ class FootballMatchScheduleSpider(spider.MultiThreadSpider):
             'draw_odds': draw_odds,
             'lose_odds': lose_odds,
         }
-
-    @staticmethod
-    def _compute_handicap(handicap: str) -> Optional[str]:
-        """去除小数字符串结尾的 0"""
-
-        handicap = handicap.replace('-', '*')
-
-        if handicap.endswith('.00'):
-            handicap = handicap[:-3]
-        elif len(handicap) > 1 and handicap.endswith('0'):
-            handicap = handicap[:-1]
-        return handicap
 
     @staticmethod
     def _compute_current_odds(jd: List) -> Dict[str, str]:
