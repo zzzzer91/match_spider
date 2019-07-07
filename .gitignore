@@ -1,4 +1,5 @@
 .idea/
 __pycache__/
-log/
 .pytest_cache/
+log/
+dist/
