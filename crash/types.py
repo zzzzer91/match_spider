@@ -11,10 +11,8 @@ __all__ = [
     'Queue',
     'Tuple', 'List', 'Dict', 'FrozenSet', 'Type', 'Optional',
     'Iterator', 'Union', 'Pattern',
-    'ProductDetailDict',
     'MysqlConfig', 'RedisConfig'
 ]
 
 MysqlConfig = Dict[str, Union[str, int]]
 RedisConfig = Dict[str, Union[str, int]]
-ProductDetailDict = Dict[str, Union[str, int, None]]
