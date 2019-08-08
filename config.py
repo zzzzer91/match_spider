@@ -5,7 +5,7 @@ from crash.log import DEBUG, INFO, WARNING, ERROR
 # 日志级别
 LOG_LEVEL = DEBUG
 
-# 使用线程数量
+# 使用线程数量，不改
 THREAD_NUM = 1
 
 # MySQL 配置
@@ -13,7 +13,7 @@ MYSQL_CONFIG = {
     'host': 'localhost',
     'port': 3306,
     'user': 'root',
-    'password': 'yousonofabitch',
+    'password': '123456',
     'db': 'topicBet',
 }
 
