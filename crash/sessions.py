@@ -7,12 +7,13 @@ Modified: 2018-10-7
 import time
 
 from requests import Session as _Session
-from requests.models import Request, Response
+from requests.models import Request
 from requests.exceptions import Timeout, ConnectionError, ChunkedEncodingError
 
-from . import env
 from .log import logger
-from .types import Optional
+
+# 请求失败后, 尝试次数
+PER_REQUEST_TRY_COUNT: int = 4
 
 
 class Session(_Session):
@@ -31,7 +32,7 @@ class Session(_Session):
                 stream=None,
                 verify=None,
                 cert=None,
-                json=None) -> Optional[Response]:
+                json=None):
 
         req = Request(
             method=method.upper(),
@@ -61,7 +62,8 @@ class Session(_Session):
 
         message = '%s: %s' % (method, prep.url)
         logger.info(message)
-        for i in range(env.PER_REQUEST_TRY_COUNT + 1):
+        why = ''
+        for i in range(PER_REQUEST_TRY_COUNT + 1):
             try:
                 r = self.send(prep, **send_kwargs)
                 return r
@@ -71,7 +73,7 @@ class Session(_Session):
                 why = 'ConnectionError'
             except ChunkedEncodingError:  # 读到的字节数与实际字节数不符
                 why = 'ChunkedEncodingError'
-            if i != env.PER_REQUEST_TRY_COUNT:
+            if i != PER_REQUEST_TRY_COUNT:
                 logger.warning('%s, retry %d >>> %s' % (why, i + 1, message))
                 time.sleep(3)
         logger.error('%s, %s' % (why, message))
